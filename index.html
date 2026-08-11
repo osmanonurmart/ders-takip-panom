@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ders Takip Panom</title>
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:#0f1720; --panel:#182634; --panel2:#1f3040; --border:#2b3f52;
+    --text:#e7edf3; --muted:#93a4b8; --accent:#4fd1c5; --accent2:#5b8def;
+    --good:#3ecf8e; --warn:#f0b429; --bad:#e5534b;
+    --sb:#5b8def; --vid:#f0b429; --dn:#e5534b;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text);}
+  input:focus,textarea:focus,select:focus,button:focus{outline:none !important;}
+  input[type=text]:focus,input[type=date]:focus,input[type=number]:focus,textarea:focus{border-color:var(--accent) !important;box-shadow:0 0 0 2px rgba(79,209,197,0.25);}
+  h1,h2,h3{margin:0;}
+  button{cursor:pointer;font-family:inherit;}
+  .btn{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;}
+  .btn:hover{border-color:var(--accent);}
+  .btn.small{padding:3px 7px;font-size:12px;}
+  .btn.danger:hover{border-color:var(--bad);color:var(--bad);}
+  .btn.primary{background:var(--accent2);border-color:var(--accent2);color:#08141f;font-weight:600;}
+  .typechoice.on{border-color:var(--accent);color:var(--accent);}
+
+  header.top{display:flex;padding:12px 20px;background:var(--panel);border-bottom:1px solid var(--border);}
+  .top-row1{display:flex;flex-wrap:wrap;align-items:center;gap:14px;width:100%;}
+  header.top h1{font-size:19px;flex:0 0 auto;white-space:nowrap;}
+  .top-spacer{flex:1;}
+
+  .dash{display:flex;gap:8px;flex-wrap:wrap;}
+  .dash .card{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;min-width:auto;display:flex;flex-direction:column;justify-content:center;}
+  .dash .card .num{font-size:17px;font-weight:700;line-height:1.15;}
+  .dash .card .lbl{font-size:10.5px;color:var(--muted);margin-top:1px;white-space:nowrap;}
+  .pace-card{cursor:pointer;min-width:210px;}
+  .pace-card .num{font-size:13px;}
+  .pace-gradient{position:relative;height:8px;border-radius:4px;margin:7px 0 3px;background:linear-gradient(to right,#3ecf8e,#8bd450,#f0b429,#e8834b,#e5534b);}
+  .pace-arrow{position:absolute;top:-7px;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid var(--text);transform:translateX(-50%);}
+  .pace-scores{font-size:9.5px;color:var(--muted);margin-top:3px;display:flex;flex-wrap:wrap;gap:5px;}
+
+  .board{display:grid;gap:14px;padding:18px 20px 20px;overflow-x:auto;}
+  .column{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px;min-width:0;}
+  .column .col-head{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .col-head .lname{font-size:15px;font-weight:700;cursor:pointer;}
+  .ring{width:88px;height:88px;}
+  .ring-bg{fill:none;stroke:var(--panel2);stroke-width:10;}
+  .ring-fg{fill:none;stroke:var(--accent);stroke-width:10;stroke-linecap:round;transform:rotate(-90deg);transform-origin:60px 60px;transition:stroke-dashoffset .3s;}
+  .ring-text{font-size:22px;font-weight:700;fill:var(--text);text-anchor:middle;dominant-baseline:middle;}
+  .stars{display:flex;gap:2px;}
+  .stars button{background:none;border:none;color:var(--border);font-size:16px;padding:0 1px;}
+  .stars button.on{color:var(--warn);}
+  .sub{font-size:11px;color:var(--muted);}
+  .count-bar{display:flex;align-items:center;gap:6px;width:100%;}
+  .count-bar .cbar{flex:1;height:5px;background:var(--panel2);border-radius:3px;overflow:hidden;}
+  .count-bar .cbar>i{display:block;height:100%;background:var(--accent2);}
+  .count-bar span{font-size:10.5px;color:var(--muted);white-space:nowrap;}
+
+  .tiles{display:flex;flex-direction:column;gap:8px;}
+  .tile-card{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:12px;text-align:left;color:var(--text);}
+  .tile-card .ttitle{font-weight:600;font-size:12.5px;margin-bottom:4px;display:flex;align-items:center;gap:4px;}
+  .tile-card .tmeta{color:var(--muted);font-size:11px;}
+  .tile-card .mbar{height:5px;background:var(--panel);border-radius:3px;overflow:hidden;margin-top:5px;}
+  .tile-card .mbar > i{display:block;height:100%;}
+  .tile-card.sb .mbar > i{background:var(--sb);}
+  .tile-card.video .mbar > i{background:var(--vid);}
+  .tile-card.deneme .mbar > i{background:var(--dn);}
+  .addtile-btn{width:100%;padding:6px;border-radius:8px;border:1px dashed var(--border);background:none;color:var(--muted);font-size:12px;}
+  .addtile-btn:hover{color:var(--accent);border-color:var(--accent);}
+  .today-col{border-color:var(--accent2);}
+  .today-section h4{font-size:10.5px;color:var(--muted);margin:2px 0 6px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
+  .tile-card.sugg{border-left:3px solid var(--warn);}
+
+  .genel{margin:0 20px 30px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .genel h3{font-size:15px;margin-bottom:10px;}
+  .genel-cols{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;}
+  .genel-left{flex:1.5;min-width:320px;}
+  .genel-right{flex:1;min-width:260px;}
+  .genel-right h4{font-size:12px;color:var(--muted);margin:0 0 6px;font-weight:600;}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  table th,table td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:left;}
+  table th{color:var(--muted);font-weight:600;font-size:11.5px;text-transform:uppercase;}
+  .delta.up{color:var(--good);} .delta.down{color:var(--bad);}
+  .calc-preview{font-size:12px;color:var(--muted);white-space:nowrap;}
+  .genel-cols input[type=number]{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 8px;font-size:12.5px;}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px;}
+  .modal-box{position:relative;background:var(--panel);border:1px solid var(--border);border-radius:10px;width:100%;max-width:560px;max-height:85vh;overflow-y:auto;padding:18px 20px;}
+  .modal-close-x{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:6px;background:none;border:none;color:var(--muted);font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;}
+  .modal-close-x:hover{background:var(--panel2);color:var(--text);}
+  .modal-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;padding-right:26px;}
+  .modal-head h2{font-size:17px;flex:1;}
+  .badge{font-size:11px;padding:2px 7px;border-radius:20px;background:var(--panel2);color:var(--muted);}
+  .progress-line{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:12.5px;color:var(--muted);}
+  .progress-line .mbar{flex:1;height:6px;background:var(--panel2);border-radius:4px;overflow:hidden;}
+  .progress-line .mbar>i{display:block;height:100%;background:var(--accent);}
+
+  .form-row{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+  .form-row label{font-size:12px;color:var(--muted);}
+  .form-row input[type=text],.form-row input[type=date],.form-row input[type=number]{
+    background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px 10px;font-size:13px;width:100%;font-family:inherit;}
+  .form-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px;}
+  textarea#f_bulk{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px;font-family:monospace;font-size:12.5px;width:100%;resize:vertical;}
+
+  .topic{border-left:2px solid var(--border);padding-left:10px;margin:8px 0;}
+  .topic.drag-over{border-left-color:var(--accent);background:rgba(79,209,197,0.06);}
+  .topic-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+  .topic-row .tname{font-weight:600;font-size:13px;cursor:pointer;flex:1;}
+  .topic-row .tname:hover{color:var(--accent);}
+  .drag-handle{cursor:grab;color:var(--muted);font-size:13px;padding:0 2px;user-select:none;}
+  .collapse-btn{background:none;border:none;color:var(--muted);font-size:11px;width:16px;flex:0 0 auto;padding:0;}
+  .icon-btn{background:none;border:none;color:var(--muted);font-size:15px;padding:0 4px;line-height:1;}
+  .icon-btn:hover{color:var(--accent);}
+  .icon-btn.danger:hover{color:var(--bad);}
+  .item-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12.5px;}
+  .item-row .iname{flex:1;}
+  .item-row .imeta{color:var(--muted);font-size:11.5px;}
+
+  .round-check{-webkit-appearance:none;appearance:none;width:19px;height:19px;min-width:19px;border-radius:50%;border:2px solid var(--muted);background:transparent;cursor:pointer;position:relative;margin:0;}
+  .round-check:checked{background:var(--good);border-color:var(--good);}
+  .round-check:checked::after{content:'';position:absolute;left:5px;top:1px;width:5px;height:9px;border:solid #08141f;border-width:0 2px 2px 0;transform:rotate(45deg);}
+
+  .trend-wrap{margin-bottom:12px;}
+  .trend-wrap h4{font-size:12px;color:var(--muted);margin:0 0 6px;font-weight:600;}
+
+  .empty{color:var(--muted);font-size:12px;text-align:center;padding:10px 0;}
+  footer{padding:16px 20px 30px;color:var(--muted);font-size:11.5px;text-align:center;}
+  input[type=file]{display:none;}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-row1">
+    <h1>📚 Ders Takip Panom</h1>
+    <div id="dashRow" class="dash"></div>
+    <div class="top-spacer"></div>
+    <button class="btn" onclick="app.exportData()">⬇ Dışa Aktar</button>
+    <button class="btn" onclick="document.getElementById('importFile').click()">⬆ Yedek Yükle</button>
+    <input type="file" id="importFile" accept="application/json" onchange="app.importData(this)">
+    <button class="btn danger" onclick="app.resetData()">Sıfırla</button>
+  </div>
+</header>
+<div id="app"></div>
+<footer>Veriler bu tarayıcının localStorage'ında saklanır. Düzenli olarak "Dışa Aktar" ile JSON yedek almanı öneririm.</footer>
+<div id="modalRoot"></div>
+
+<script>
+const KEY='dersTakipPanoData_v1';
+const LESSON_NAMES=['Türkçe','Matematik','Coğrafya','Tarih','Vatandaşlık'];
+const EXAM_DATE='2026-10-04';
+const FINISH_DATE='2026-09-21';
+const PACE_STAGES=[
+  {max:0.6, label:'Çok Rahat', color:'#3ecf8e'},
+  {max:0.85, label:'İyi Gidiyorsun', color:'#8bd450'},
+  {max:1.05, label:'Tam Yetişiyor', color:'#f0b429'},
+  {max:1.3, label:'Riskli', color:'#e8834b'},
+  {max:Infinity, label:'Yetişmiyor', color:'#e5534b'}
+];
+let state=null;
+let activeModalRefresh=null;
+let draggedTopicId=null;
+let genelTrendView='total';
+
+function uid(){return 'id'+Math.random().toString(36).slice(2,9)+Date.now().toString(36);}
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function todayISO(){return new Date().toISOString().slice(0,10);}
+function secToHM(sec){
+  sec=Math.max(0,Math.round(sec||0));
+  const h=Math.floor(sec/3600), m=Math.round((sec%3600)/60);
+  if(h>0) return h+' sa '+m+' dk';
+  return m+' dk';
+}
+function secToMMSS(sec){ sec=Math.max(0,Math.round(sec||0)); const m=Math.floor(sec/60), s=sec%60; return m+':'+String(s).padStart(2,'0'); }
+function parseDuration(s){
+  s=(s||'').toString().trim().replace(',','.');
+  if(!s) return 0;
+  if(s.includes(':')){
+    const parts=s.split(':').map(x=>parseFloat(x)||0);
+    if(parts.length===2) return Math.round(parts[0]*60+parts[1]);
+    if(parts.length===3) return Math.round(parts[0]*3600+parts[1]*60+parts[2]);
+  }
+  const v=parseFloat(s);
+  return isNaN(v)?0:Math.round(v*60);
+}
+function fmtDate(d){ if(!d) return '-'; const dt=new Date(d); return dt.toLocaleDateString('tr-TR'); }
+
+function defaultState(){
+  return {
+    dailyStudyHours: 4,
+    todos: [],
+    lessons: LESSON_NAMES.map(name=>({id:uid(), name, importance:3, tiles:[]})),
+    genelDenemeler: []
+  };
+}
+function load(){
+  try{
+    const raw=localStorage.getItem(KEY);
+    state = raw? JSON.parse(raw) : defaultState();
+    if(!state || !state.lessons) state=defaultState();
+  }catch(e){ state=defaultState(); }
+  (state.genelDenemeler||[]).forEach(e=>{
+    if(!e.subjects && e.nets){
+      e.subjects={};
+      Object.keys(e.nets).forEach(lid=>{ e.subjects[lid]={total:0,correct:0,wrong:0,blank:0,net:parseFloat(e.nets[lid])||0}; });
+      delete e.nets;
+    }
+  });
+}
+function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+
+/* ---------- lookups ---------- */
+function getLesson(lessonId){ return state.lessons.find(l=>l.id===lessonId); }
+function getTile(lessonId,tileId){ return getLesson(lessonId).tiles.find(t=>t.id===tileId); }
+function findTopicRecursive(topics,id){
+  for(const t of topics){
+    if(t.id===id) return t;
+    const f=findTopicRecursive(t.subtopics,id);
+    if(f) return f;
+  }
+  return null;
+}
+function removeFromTree(topics,id){
+  const idx=topics.findIndex(t=>t.id===id);
+  if(idx>-1){ topics.splice(idx,1); return true; }
+  for(const t of topics){ if(removeFromTree(t.subtopics,id)) return true; }
+  return false;
+}
+function extractTopic(topics,id){
+  const idx=topics.findIndex(t=>t.id===id);
+  if(idx>-1) return topics.splice(idx,1)[0];
+  for(const t of topics){
+    const found=extractTopic(t.subtopics,id);
+    if(found) return found;
+  }
+  return null;
+}
+function containsTopic(topic,id){
+  if(topic.id===id) return true;
+  return topic.subtopics.some(s=>containsTopic(s,id));
+}
+function findItemRecursive(topics,itemId){
+  for(const t of topics){
+    const it=t.items.find(i=>i.id===itemId);
+    if(it) return it;
+    const f=findItemRecursive(t.subtopics,itemId);
+    if(f) return f;
+  }
+  return null;
+}
+function removeItemRecursive(topics,itemId){
+  for(const t of topics){
+    const idx=t.items.findIndex(i=>i.id===itemId);
+    if(idx>-1){ t.items.splice(idx,1); return true; }
+    if(removeItemRecursive(t.subtopics,itemId)) return true;
+  }
+  return false;
+}
+
+/* ---------- bulk import parsers ---------- */
+function importVideoLines(tile,lines){
+  for(const line of lines){
+    const [konuName,altName,title,durStr]=line.split(';').map(s=>(s||'').trim());
+    if(!konuName || !title) continue;
+    let konu=tile.topics.find(t=>t.name===konuName);
+    if(!konu){ konu={id:uid(),name:konuName,secondsPerQuestion:null,items:[],subtopics:[]}; tile.topics.push(konu); }
+    let target=konu;
+    if(altName){
+      let sub=konu.subtopics.find(s=>s.name===altName);
+      if(!sub){ sub={id:uid(),name:altName,secondsPerQuestion:null,items:[],subtopics:[]}; konu.subtopics.push(sub); }
+      target=sub;
+    }
+    target.items.push({id:uid(),kind:'video',title,durationSec:parseDuration(durStr),done:false,doneAt:null});
+  }
+}
+function importSoruLines(tile,lines){
+  for(const line of lines){
+    const [konuName,altName,testName,cntStr,spqStr]=line.split(';').map(s=>(s||'').trim());
+    if(!konuName || !testName) continue;
+    let konu=tile.topics.find(t=>t.name===konuName);
+    if(!konu){
+      konu={id:uid(),name:konuName,secondsPerQuestion:spqStr?parseDuration(spqStr):90,items:[],subtopics:[]};
+      tile.topics.push(konu);
+    }
+    let target=konu;
+    if(altName){
+      let sub=konu.subtopics.find(s=>s.name===altName);
+      if(!sub){ sub={id:uid(),name:altName,secondsPerQuestion:null,items:[],subtopics:[]}; konu.subtopics.push(sub); }
+      target=sub;
+    }
+    target.items.push({id:uid(),kind:'test',name:testName,questionCount:parseInt(cntStr,10)||0,done:false,doneAt:null});
+  }
+}
+function importDenemeLines(tile,lines){
+  for(const line of lines){
+    const [dateStr,durStr,netStr]=line.split(';').map(s=>(s||'').trim());
+    if(!dateStr) continue;
+    tile.entries.push({id:uid(),date:dateStr,durationSec:durStr?parseDuration(durStr):tile.defaultDurationSec,net:parseFloat(netStr)||0});
+  }
+}
+
+/* ---------- stats ---------- */
+function topicStats(topic,type,inheritedSPQ){
+  let totalSec=0,doneSec=0,totalCount=0,doneCount=0;
+  const spq = type==='soru_bankasi' ? (topic.secondsPerQuestion ?? inheritedSPQ) : null;
+  for(const item of topic.items){
+    const sec = type==='soru_bankasi' ? item.questionCount*spq : item.durationSec;
+    totalSec+=sec; totalCount++;
+    if(item.done){ doneSec+=sec; doneCount++; }
+  }
+  for(const sub of topic.subtopics){
+    const s=topicStats(sub,type,spq);
+    totalSec+=s.totalSec; doneSec+=s.doneSec; totalCount+=s.totalCount; doneCount+=s.doneCount;
+  }
+  return {totalSec,doneSec,totalCount,doneCount};
+}
+function tileStats(tile){
+  if(tile.type==='deneme'){
+    const t=tile.entries.reduce((a,e)=>a+e.durationSec,0);
+    return {totalSec:0,doneSec:0,totalCount:0,doneCount:0,denemeTimeSec:t,denemeCount:tile.entries.length};
+  }
+  const agg={totalSec:0,doneSec:0,totalCount:0,doneCount:0,denemeTimeSec:0,denemeCount:0};
+  for(const t of tile.topics){
+    const s=topicStats(t,tile.type,null);
+    agg.totalSec+=s.totalSec; agg.doneSec+=s.doneSec; agg.totalCount+=s.totalCount; agg.doneCount+=s.doneCount;
+  }
+  return agg;
+}
+function lessonStats(lesson){
+  const agg={totalSec:0,doneSec:0,totalCount:0,doneCount:0,denemeTimeSec:0,denemeCount:0};
+  for(const tile of lesson.tiles){
+    const s=tileStats(tile);
+    agg.totalSec+=s.totalSec; agg.doneSec+=s.doneSec; agg.totalCount+=s.totalCount; agg.doneCount+=s.doneCount;
+    agg.denemeTimeSec+=s.denemeTimeSec; agg.denemeCount+=s.denemeCount;
+  }
+  agg.pct = agg.totalSec>0 ? Math.round(agg.doneSec/agg.totalSec*100) : 0;
+  agg.remainingSec = Math.max(agg.totalSec-agg.doneSec,0);
+  return agg;
+}
+function daysUntil(dateStr){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const target=new Date(dateStr); target.setHours(0,0,0,0);
+  return Math.ceil((target-today)/86400000);
+}
+function daysLeft(){ return daysUntil(EXAM_DATE); }
+function paceStatus(){
+  const days=daysUntil(FINISH_DATE);
+  let agg={totalSec:0,doneSec:0};
+  state.lessons.forEach(l=>{ const s=lessonStats(l); agg.totalSec+=s.totalSec; agg.doneSec+=s.doneSec; });
+  const remainingHours=Math.max(agg.totalSec-agg.doneSec,0)/3600;
+  const dailyBudget=state.dailyStudyHours||4;
+  const requiredDaily = days>0 ? remainingHours/days : (remainingHours>0.05? 999 : 0);
+  const ratio = requiredDaily/dailyBudget;
+  let idx=PACE_STAGES.findIndex(s=>ratio<=s.max);
+  if(idx===-1) idx=PACE_STAGES.length-1;
+  return {...PACE_STAGES[idx], level:idx+1, requiredDaily, ratio, days, dailyBudget};
+}
+function effectiveSPQ(topic,inherited){ return topic.secondsPerQuestion ?? inherited; }
+function collectItems(topic){
+  let list=topic.items.slice();
+  for(const sub of topic.subtopics) list=list.concat(collectItems(sub));
+  return list;
+}
+
+/* ---------- render root ---------- */
+function renderAll(){ renderApp(); if(activeModalRefresh) activeModalRefresh(); }
+function renderApp(){
+  document.getElementById('dashRow').innerHTML = dashboardHtml();
+  document.getElementById('app').innerHTML = boardHtml()+genelHtml();
+}
+
+function avgNetForLesson(lessonId){
+  const nets = state.genelDenemeler.map(e=> e.subjects && e.subjects[lessonId] ? e.subjects[lessonId].net : null).filter(v=>v!==null);
+  if(!nets.length) return null;
+  return nets.reduce((a,b)=>a+b,0)/nets.length;
+}
+function dashboardHtml(){
+  let agg={totalSec:0,doneSec:0};
+  state.lessons.forEach(l=>{ const s=lessonStats(l); agg.totalSec+=s.totalSec; agg.doneSec+=s.doneSec; });
+  const pct = agg.totalSec>0? Math.round(agg.doneSec/agg.totalSec*100):0;
+  const remaining = Math.max(agg.totalSec-agg.doneSec,0);
+  const dl = daysLeft();
+  const gd = state.genelDenemeler.slice().sort((a,b)=>a.date.localeCompare(b.date));
+  const lastGd = gd[gd.length-1];
+  const lastTotal = lastGd ? genelTotalNet(lastGd) : null;
+  const pace = paceStatus();
+  const posPct = Math.max(0,Math.min(1, pace.ratio/1.6))*100;
+  const scoreStr = state.lessons.map(l=>{ const v=avgNetForLesson(l.id); return `${esc(l.name)} ${v===null?'-':v.toFixed(0)}`; }).join(' · ');
+
+  return `<div class="dash">
+    <div class="card"><div class="num">%${pct}</div><div class="lbl">Toplam ilerleme</div></div>
+    <div class="card"><div class="num">${secToHM(remaining)}</div><div class="lbl">Kalan toplam süre</div></div>
+    <div class="card"><div class="num">${dl===null?'-':(dl+' gün')}</div><div class="lbl">Sınava kalan</div></div>
+    <div class="card"><div class="num">${lastTotal===null?'-':lastTotal.toFixed(1)}</div><div class="lbl">Son genel deneme neti</div></div>
+    <div class="card pace-card" onclick="app.editDailyHours()" title="Günlük çalışma hedefini değiştir">
+      <div class="num" style="color:${pace.color}">${pace.label} · ${pace.requiredDaily.toFixed(1)} sa/gün</div>
+      <div class="pace-gradient"><div class="pace-arrow" style="left:${posPct}%"></div></div>
+      <div class="lbl">21 Eyl'e yetişme</div>
+      <div class="pace-scores">${scoreStr}</div>
+    </div>
+  </div>`;
+}
+
+function ringSvg(pct){
+  const r=52, c=2*Math.PI*r;
+  const offset = c*(1-pct/100);
+  return `<svg class="ring" viewBox="0 0 120 120">
+    <circle class="ring-bg" cx="60" cy="60" r="${r}"></circle>
+    <circle class="ring-fg" cx="60" cy="60" r="${r}" stroke-dasharray="${c}" stroke-dashoffset="${offset}"></circle>
+    <text x="60" y="64" class="ring-text">%${pct}</text>
+  </svg>`;
+}
+
+function bestTileFor(lesson){
+  const candidates = lesson.tiles.filter(t=>t.type!=='deneme');
+  let best=null,bestPct=101;
+  for(const t of candidates){
+    const s=tileStats(t);
+    if(s.totalSec<=0) continue;
+    const pct = Math.round(s.doneSec/s.totalSec*100);
+    if(pct<bestPct){ bestPct=pct; best=t; }
+  }
+  if(!best) best = candidates[0] || lesson.tiles.find(t=>t.type==='deneme') || null;
+  return best;
+}
+function todaySuggestions(){
+  return state.lessons.map(l=>{
+    const s=lessonStats(l);
+    const remainRatio = s.totalSec>0? s.remainingSec/s.totalSec : 0;
+    const score = l.importance*remainRatio;
+    const best = bestTileFor(l);
+    return {lesson:l, score, best};
+  }).filter(r=>r.best && r.score>0).sort((a,b)=>b.score-a.score).slice(0,4);
+}
+function todayColumnHtml(){
+  const sugg = todaySuggestions();
+  const todos = state.todos||[];
+  return `<div class="column today-col">
+    <div class="col-head"><div class="lname" style="cursor:default;">🎯 Bugün</div></div>
+    <div class="today-section">
+      <h4>Öneriler</h4>
+      ${sugg.length? sugg.map(r=>`<button class="tile-card sugg" onclick="app.openTileModal('${r.lesson.id}','${r.best.id}')" style="text-align:left;width:100%;">
+        <div class="ttitle">${esc(r.lesson.name)}</div>
+        <div class="tmeta">${esc(r.best.name)}</div>
+      </button>`).join('') : '<div class="empty">Öneri yok, harika gidiyorsun 🎉</div>'}
+    </div>
+    <div class="today-section">
+      <h4>Notların</h4>
+      ${todos.length? todos.map(t=>`<div class="item-row">
+        <input type="checkbox" class="round-check" ${t.done?'checked':''} onclick="app.toggleTodo('${t.id}')">
+        <span class="iname" style="${t.done?'text-decoration:line-through;color:var(--muted);':''}">${esc(t.text)}</span>
+        <button class="btn small danger" onclick="app.deleteTodo('${t.id}')">✕</button>
+      </div>`).join('') : '<div class="empty">Not yok</div>'}
+    </div>
+    <button class="addtile-btn" onclick="app.addTodo()">+ Not Ekle</button>
+  </div>`;
+}
+function boardHtml(){
+  return `<div class="board" style="grid-template-columns:repeat(${state.lessons.length+1},1fr)">${todayColumnHtml()}${state.lessons.map(l=>columnHtml(l)).join('')}</div>`;
+}
+function columnHtml(l){
+  const s=lessonStats(l);
+  const stars=[1,2,3,4,5].map(n=>`<button class="${n<=l.importance?'on':''}" onclick="app.setImportance('${l.id}',${n})">★</button>`).join('');
+  const countPct = s.totalCount>0? Math.round(s.doneCount/s.totalCount*100):0;
+  return `<div class="column">
+    <div class="col-head">
+      <div class="lname" title="Yeniden adlandır" onclick="app.renameLesson('${l.id}')">${esc(l.name)}</div>
+      ${ringSvg(s.pct)}
+      <div class="stars">${stars}</div>
+      <div class="count-bar"><div class="cbar"><i style="width:${countPct}%"></i></div><span>${s.totalCount}/${s.doneCount}</span></div>
+      <div class="sub">${secToHM(s.remainingSec)} kaldı ${s.denemeCount?('· '+s.denemeCount+' deneme'):''}</div>
+    </div>
+    <div class="tiles">
+      ${l.tiles.length? l.tiles.slice().sort((a,b)=>TILE_ORDER[a.type]-TILE_ORDER[b.type]).map(t=>tileCardHtml(l,t)).join('') : '<div class="empty">Henüz kutucuk yok</div>'}
+    </div>
+    <button class="addtile-btn" onclick="app.addTile('${l.id}')">+ Kutucuk ekle</button>
+  </div>`;
+}
+const TILE_ORDER={video:0,soru_bankasi:1,deneme:2};
+const TILE_ICON={soru_bankasi:'📝',video:'🎬',deneme:'🧪'};
+const TILE_CLASS={soru_bankasi:'sb',video:'video',deneme:'deneme'};
+function tileCardHtml(l,t){
+  const cls=TILE_CLASS[t.type];
+  let meta,pct;
+  if(t.type==='deneme'){
+    const last=t.entries.slice().sort((a,b)=>a.date.localeCompare(b.date)).pop();
+    const lastNet = last? (typeof last.net==='number'? last.net.toFixed(2): last.net) : '-';
+    meta = t.entries.length? (t.entries.length+' deneme · son net: '+lastNet) : 'Henüz deneme yok';
+    pct=null;
+  }else{
+    const s=tileStats(t);
+    pct = s.totalSec>0? Math.round(s.doneSec/s.totalSec*100):0;
+    meta = secToHM(s.doneSec)+' / '+secToHM(s.totalSec);
+  }
+  return `<button class="tile-card ${cls}" onclick="app.openTileModal('${l.id}','${t.id}')" style="text-align:left;">
+    <div class="ttitle">${TILE_ICON[t.type]} ${esc(t.name)}</div>
+    <div class="tmeta">${meta}</div>
+    ${pct!==null?`<div class="mbar"><i style="width:${pct}%"></i></div>`:''}
+  </button>`;
+}
+
+/* ---------- Genel Denemeler ---------- */
+function genelTotalNet(e){ return Object.values(e.subjects).reduce((a,s)=>a+(s.net||0),0); }
+function genelHtml(){
+  const list = state.genelDenemeler.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const sortedAsc = state.genelDenemeler.slice().sort((a,b)=>a.date.localeCompare(b.date));
+  function deltaFor(entry, lessonId){
+    const idx = sortedAsc.findIndex(e=>e.id===entry.id);
+    if(idx<=0) return null;
+    const prev = sortedAsc[idx-1];
+    const cur = prev.subjects && entry.subjects[lessonId]? entry.subjects[lessonId].net : null;
+    const pv = prev.subjects && prev.subjects[lessonId]? prev.subjects[lessonId].net : null;
+    if(cur===null||pv===null) return null;
+    return cur-pv;
+  }
+  const trendPts = genelTrendView==='total'
+    ? sortedAsc.map(e=>({date:e.date, value:genelTotalNet(e)}))
+    : sortedAsc.map(e=>({date:e.date, value: e.subjects[genelTrendView]? e.subjects[genelTrendView].net : 0}));
+  return `<div class="genel">
+    <h3>🧪 Genel Denemeler (tüm dersler, ~2 sa 10 dk)</h3>
+    <div class="genel-cols">
+      <div class="genel-left">
+        <button class="btn primary" onclick="app.addGenelDeneme()" style="margin-bottom:10px;">+ Genel Deneme Ekle</button>
+        ${list.length? `<div style="overflow-x:auto;"><table>
+          <tr><th>Tarih</th><th>Süre</th>${state.lessons.map(l=>`<th>${esc(l.name)}</th>`).join('')}<th>Toplam Net</th><th></th></tr>
+          ${list.map(e=>{
+            return `<tr>
+              <td>${fmtDate(e.date)}</td>
+              <td>${secToHM(e.durationSec)}</td>
+              ${state.lessons.map(l=>{
+                const subj=e.subjects[l.id];
+                const d=deltaFor(e,l.id);
+                const dstr = d===null?'':(d>0?` <span class="delta up">(+${d.toFixed(2)})</span>`:d<0?` <span class="delta down">(${d.toFixed(2)})</span>`:'');
+                return `<td>${subj?subj.net.toFixed(2):'-'}${dstr}</td>`;
+              }).join('')}
+              <td><b>${genelTotalNet(e).toFixed(2)}</b></td>
+              <td><button class="btn small danger" onclick="app.deleteGenelDeneme('${e.id}')">Sil</button></td>
+            </tr>`;
+          }).join('')}
+        </table></div>` : '<div class="empty">Henüz genel deneme kaydı yok</div>'}
+      </div>
+      <div class="genel-right">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+          <h4 style="margin:0;">📈 Net Trendi</h4>
+          <select onchange="app.setGenelTrendView(this.value)" class="btn small">
+            <option value="total" ${genelTrendView==='total'?'selected':''}>Toplam</option>
+            ${state.lessons.map(l=>`<option value="${l.id}" ${genelTrendView===l.id?'selected':''}>${esc(l.name)}</option>`).join('')}
+          </select>
+        </div>
+        ${trendSvg(trendPts)}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------- Modal: tile detail ---------- */
+function openModal(html){
+  const root=document.getElementById('modalRoot');
+  const prevBox=root.querySelector('.modal-box');
+  const prevScroll=prevBox? prevBox.scrollTop : 0;
+  root.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this) app.closeModal()"><div class="modal-box"><button class="modal-close-x" onclick="app.closeModal()" title="Kapat">✕</button>${html}</div></div>`;
+  const newBox=root.querySelector('.modal-box');
+  if(newBox) newBox.scrollTop=prevScroll;
+}
+function trendSvg(pointsAsc, title){
+  if(pointsAsc.length<2) return `<div class="empty">Trend grafiği için en az 2 kayıt gerekli</div>`;
+  const W=480,H=140,PAD=26;
+  const vals=pointsAsc.map(p=>p.value);
+  const min=Math.min(...vals), max=Math.max(...vals);
+  const range=(max-min)||1;
+  const n=pointsAsc.length;
+  const stepX=(W-2*PAD)/(n-1);
+  const pts=pointsAsc.map((p,i)=>({
+    x: PAD+i*stepX,
+    y: PAD+(max-p.value)/range*(H-2*PAD),
+    value: p.value,
+    date: p.date
+  }));
+  const polyline=pts.map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  const areaPath=`M${pts[0].x.toFixed(1)},${H-PAD} `+pts.map(p=>`L${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')+` L${pts[pts.length-1].x.toFixed(1)},${H-PAD} Z`;
+  const dots=pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" style="fill:var(--accent)"></circle><text x="${p.x.toFixed(1)}" y="${(p.y-9).toFixed(1)}" font-size="10" style="fill:var(--text)" text-anchor="middle">${p.value.toFixed ? p.value.toFixed(1) : p.value}</text>`).join('');
+  const showLabel=(i)=> i===0 || i===pts.length-1 || n<=6;
+  const labels=pts.map((p,i)=> showLabel(i)? `<text x="${p.x.toFixed(1)}" y="${H-6}" font-size="9" style="fill:var(--muted)" text-anchor="middle">${fmtDate(p.date)}</text>` : '').join('');
+  return `<div class="trend-wrap">${title?`<h4>${title}</h4>`:''}<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:140px;">
+    <path d="${areaPath}" style="fill:var(--accent);opacity:0.15"></path>
+    <polyline points="${polyline}" style="fill:none;stroke:var(--accent);stroke-width:2"></polyline>
+    ${dots}${labels}
+  </svg></div>`;
+}
+function denemeTrendSvg(entriesAsc){
+  return trendSvg(entriesAsc.map(e=>({date:e.date, value:parseFloat(e.net)||0})), '📈 Net trendi');
+}
+function calcNetDisplay(total,correct,wrong){
+  total=parseInt(total)||0; correct=parseInt(correct)||0; wrong=parseInt(wrong)||0;
+  const blank=total-correct-wrong;
+  const net=correct-wrong/4;
+  return {total,correct,wrong,blank,net,invalid:blank<0};
+}
+function closeModal(){ activeModalRefresh=null; document.getElementById('modalRoot').innerHTML=''; }
+
+function confirmDeleteModal(message, confirmJs, cancelJs){
+  openModal(`<div class="modal-head"><h2>⚠️ Onay</h2></div>
+  <p style="font-size:13px;color:var(--muted);margin:0 0 16px;">${esc(message)}</p>
+  <div class="form-actions">
+    <button class="btn" onclick="${cancelJs}">Vazgeç</button>
+    <button class="btn danger" onclick="${confirmJs}">Evet, sil</button>
+  </div>`);
+}
+
+function tileModalHtml(lessonId,tileId){
+  const tile=getTile(lessonId,tileId);
+  if(!tile) return '';
+  let body='';
+  if(tile.type==='deneme'){
+    const entries = tile.entries.slice().sort((a,b)=>b.date.localeCompare(a.date));
+    const sortedAsc = tile.entries.slice().sort((a,b)=>a.date.localeCompare(b.date));
+    body = `<div class="sub" style="margin-bottom:8px;">Varsayılan süre: ${secToHM(tile.defaultDurationSec)} <button class="btn small" onclick="app.editDefaultDuration('${lessonId}','${tileId}')">Değiştir</button></div>
+    <button class="btn primary" onclick="app.addDenemeEntry('${lessonId}','${tileId}')" style="margin-bottom:10px;">+ Deneme Sonucu Ekle</button>
+    ${denemeTrendSvg(sortedAsc)}
+    ${entries.length? `<div style="overflow-x:auto;"><table><tr><th>Tarih</th><th>Süre</th><th>D</th><th>Y</th><th>B</th><th>Net</th><th></th></tr>
+      ${entries.map(e=>{
+        const idx=sortedAsc.findIndex(x=>x.id===e.id);
+        const prev = idx>0? sortedAsc[idx-1]:null;
+        const d = prev? (parseFloat(e.net)-parseFloat(prev.net)) : null;
+        const dstr = d===null?'':(d>0?` <span class="delta up">(+${d.toFixed(2)})</span>`:d<0?` <span class="delta down">(${d.toFixed(2)})</span>`:'');
+        const netStr = typeof e.net==='number'? e.net.toFixed(2) : e.net;
+        return `<tr><td>${fmtDate(e.date)}</td><td>${secToHM(e.durationSec)}</td>
+          <td>${e.correct??'-'}</td><td>${e.wrong??'-'}</td><td>${e.blank??'-'}</td>
+          <td>${netStr}${dstr}</td>
+          <td><button class="btn small danger" onclick="app.deleteDenemeEntry('${lessonId}','${tileId}','${e.id}')">Sil</button></td></tr>`;
+      }).join('')}
+    </table></div>` : '<div class="empty">Henüz deneme kaydı yok</div>'}`;
+  } else {
+    const s=tileStats(tile);
+    const pct = s.totalSec>0? Math.round(s.doneSec/s.totalSec*100):0;
+    body = `<div class="progress-line"><span>%${pct}</span><div class="mbar"><i style="width:${pct}%"></i></div><span>${secToHM(s.doneSec)} / ${secToHM(s.totalSec)}</span></div>
+    <button class="btn primary" onclick="app.addTopic('${lessonId}','${tileId}')" style="margin-bottom:8px;">+ Konu Ekle</button>
+    ${tile.topics.length? tile.topics.map(t=>topicHtml(t,lessonId,tileId,tile.type,null)).join('') : '<div class="empty">Henüz konu yok</div>'}`;
+  }
+  return `<div class="modal-head">
+    <span class="badge">${TILE_ICON[tile.type]} ${tile.type==='soru_bankasi'?'Soru Bankası':tile.type==='video'?'Video':'Deneme'}</span>
+    <h2>${esc(tile.name)}</h2>
+    <button class="btn small" onclick="app.openImportModal('${lessonId}','${tileId}')">📥 İçe Aktar</button>
+    <button class="btn small" onclick="app.renameTile('${lessonId}','${tileId}')">Ad değiştir</button>
+    <button class="btn small danger" onclick="app.deleteTile('${lessonId}','${tileId}')">Sil</button>
+  </div>
+  ${body}`;
+}
+function topicHtml(topic,lessonId,tileId,type,inheritedSPQ){
+  const spq = effectiveSPQ(topic,inheritedSPQ);
+  const allItems = collectItems(topic);
+  const allDone = allItems.length>0 && allItems.every(i=>i.done);
+  const collapsed = !!topic.collapsed;
+  return `<div class="topic" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="this.classList.remove('drag-over');app.dropOnTopic(event,'${lessonId}','${tileId}','${topic.id}')">
+    <div class="topic-row">
+      <span class="drag-handle" draggable="true" ondragstart="app.dragStartTopic(event,'${topic.id}')" title="Sürükleyip başka bir konunun altına taşı">⠿</span>
+      <button class="collapse-btn" onclick="app.toggleCollapse('${lessonId}','${tileId}','${topic.id}')" title="Aç/Kapat">${collapsed?'▶':'▼'}</button>
+      <input type="checkbox" class="round-check" ${allDone?'checked':''} onclick="app.toggleTopicAll('${lessonId}','${tileId}','${topic.id}')" title="Tümünü tikle/aç">
+      <span class="tname" onclick="app.editTopic('${lessonId}','${tileId}','${topic.id}')" title="Düzenle">${esc(topic.name)}</span>
+      ${type==='soru_bankasi'? `<span class="badge">${(spq/60).toFixed(1)} dk/soru</span>`:''}
+      <button class="icon-btn" onclick="app.addItem('${lessonId}','${tileId}','${topic.id}')" title="${type==='soru_bankasi'?'Test Ekle':'Video Ekle'}">+</button>
+      <button class="icon-btn danger" onclick="app.deleteTopic('${lessonId}','${tileId}','${topic.id}')" title="Sil">✕</button>
+    </div>
+    ${collapsed? '' : `${topic.items.map(it=>itemHtml(it,lessonId,tileId,type,spq)).join('')}${topic.subtopics.map(st=>topicHtml(st,lessonId,tileId,type,spq)).join('')}`}
+  </div>`;
+}
+function itemHtml(item,lessonId,tileId,type,spq){
+  const isTest = type==='soru_bankasi';
+  const sec = isTest? item.questionCount*spq : item.durationSec;
+  const label = isTest? item.name : item.title;
+  const meta = isTest? (item.questionCount+' soru · '+secToHM(sec)) : secToHM(sec);
+  return `<div class="item-row">
+    <input type="checkbox" class="round-check" ${item.done?'checked':''} onclick="app.toggleItem('${lessonId}','${tileId}','${item.id}')">
+    <span class="iname" style="${item.done?'text-decoration:line-through;color:var(--muted);':''}">${esc(label)}</span>
+    <span class="imeta">${meta}</span>
+    <button class="icon-btn" onclick="app.editItem('${lessonId}','${tileId}','${item.id}')" title="Düzenle">✎</button>
+    <button class="icon-btn danger" onclick="app.deleteItem('${lessonId}','${tileId}','${item.id}')" title="Sil">✕</button>
+  </div>`;
+}
+
+/* ---------- app actions ---------- */
+const app = {
+  closeModal(){ closeModal(); },
+
+  setImportance(lessonId,val){ getLesson(lessonId).importance=val; save(); renderAll(); },
+
+  editDailyHours(){
+    openModal(`<div class="modal-head"><h2>Günlük Çalışma Hedefi</h2></div>
+      <div class="form-row"><label>Günde ortalama kaç saat çalışıyorsun?</label><input type="number" step="0.5" id="f_hours" value="${state.dailyStudyHours||4}"></div>
+      <div class="form-actions"><button class="btn" onclick="app.closeModal()">Vazgeç</button><button class="btn primary" onclick="app.doEditDailyHours()">Kaydet</button></div>`);
+  },
+  doEditDailyHours(){
+    const v=parseFloat(document.getElementById('f_hours').value);
+    if(v>0) state.dailyStudyHours=v;
+    save(); closeModal(); renderApp();
+  },
+
+  addTodo(){
+    openModal(`<div class="modal-head"><h2>Not Ekle</h2></div>
+      <div class="form-row"><label>Bugün yapılacak</label><input type="text" id="f_name" placeholder="örn: Tarih - Test 5"></div>
+      <div class="form-actions"><button class="btn" onclick="app.closeModal()">Vazgeç</button><button class="btn primary" onclick="app.doAddTodo()">Ekle</button></div>`);
+  },
+  doAddTodo(){
+    const v=document.getElementById('f_name').value.trim();
+    if(v){ (state.todos=state.todos||[]).push({id:uid(),text:v,done:false}); save(); }
+    closeModal(); renderApp();
+  },
+  toggleTodo(id){
+    const t=(state.todos||[]).find(x=>x.id===id);
+    if(t){ t.done=!t.done; save(); renderApp(); }
+  },
+  deleteTodo(id){
+    state.todos=(state.todos||[]).filter(x=>x.id!==id);
+    save(); renderApp();
+  },
+
+  renameLesson(lessonId){
+    const l=getLesson(lessonId);
+    openModal(`<div class="modal-head"><h2>Ders adını düzenle</h2></div>
+      <div class="form-row"><label>Ders adı</label><input type="text" id="f_name" value="${esc(l.name)}"></div>
+      <div class="form-actions"><button class="btn" onclick="app.closeModal()">Vazgeç</button><button class="btn primary" onclick="app.doRenameLesson('${lessonId}')">Kaydet</button></div>`);
+  },
+  doRenameLesson(lessonId){
+    const v=document.getElementById('f_name').value.trim();
+    if(v){ getLesson(lessonId).name=v; save(); }
+    closeModal(); renderApp();
+  },
+
+  addTile(lessonId){
+    openModal(`<div class="modal-head"><h2>Yeni Kutucuk Ekle</h2></div>
+      <div class="form-row"><label>Kutucuk tipi</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button type="button" class="btn typechoice on" onclick="app.pickTileType(this,'soru_bankasi')">📝 Soru Bankası</button>
+          <button type="button" class="btn typechoice" onclick="app.pickTileType(this,'video')">🎬 Video</button>
+          <button type="button" class="btn typechoice" onclick="app.pickTileType(this,'deneme')">🧪 Deneme</button>
+        </div>
+        <input type="hidden" id="f_type" value="soru_bankasi">
+      </div>
+      <div class="form-row"><label>Kutucuk adı</label><input type="text" id="f_name" value="Soru Bankası 1"></div>
+      <div class="form-row" id="f_durrow" style="display:none;"><label>Varsayılan deneme süresi</label><input type="text" id="f_dur" value="40:00" placeholder="dk:sn ya da dakika"></div>
+      <div class="form-actions"><button class="btn" onclick="app.closeModal()">Vazgeç</button><button class="btn primary" onclick="app.doAddTile('${lessonId}')">Ekle</button></div>`);
+  },
+  pickTileType(btn,type){
+    document.querySelectorAll('.typechoice').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');
+    document.getElementById('f_type').value=type;
+    document.getElementById('f_durrow').style.display = type==='deneme'?'flex':'none';
+    const nameInput=document.getElementById('f_name');
+    if(['Soru Bankası 1','Videolar','Deneme'].includes(nameInput.value)){
+      nameInput.value = type==='deneme'?'Deneme':type==='video'?'Videolar':'Soru Bankası 1';
+    }
+  },
+  doAddTile(lessonId){
+    const type=document.getElementById('f_type').value;
+    const name=document.getElementById('f_name').value.trim();
+    if(!name) return;
+    const tile={id:uid(), type, name};
+    if(type==='deneme'){ tile.defaultDurationSec=parseDuration(document.getElementById('f_dur').value)||2400; tile.defaultQuestionCount=40; tile.entries=[]; }
+    else tile.topics=[];
+    getLesson(lessonId).tiles.push(tile);
+    save(); closeModal(); renderApp();
+  },
+
+  renameTile(lessonId,tileId){
+    const t=getTile(lessonId,tileId);
+    openModal(`<div class="modal-head"><h2>Kutucuk adını düzenle</h2></div>
+      <div class="form-row"><label>Ad</label><input type="text" id="f_name" value="${esc(t.name)}"></div>
+      <div class="form-actions"><button class="btn" onclick="app.openTileModal('${lessonId}','${tileId}')">Vazgeç</button><button class="btn primary" onclick="app.doRenameTile('${lessonId}','${tileId}')">Kaydet</button></div>`);
+  },
+  doRenameTile(lessonId,tileId){
+    const v=document.getElementById('f_name').value.trim();
+    if(v){ getTile(lessonId,tileId).name=v; save(); }
+    app.openTileModal(lessonId,tileId);
+  },
+  deleteTile(lessonId,tileId){
+    confirmDeleteModal('Bu kutucuğu ve içindeki tüm verileri silmek istediğine emin misin?',
+      `app.doDeleteTile('${lessonId}','${tileId}')`,
+      `app.openTileModal('${lessonId}','${tileId}')`);
+  },
+  doDeleteTile(lessonId,tileId){
+    const l=getLesson(lessonId);
+    l.tiles=l.tiles.filter(t=>t.id!==tileId);
+    save(); closeModal(); renderApp();
+  },
+  openTileModal(lessonId,tileId){
+    activeModalRefresh=()=>openModal(tileModalHtml(lessonId,tileId));
+    activeModalRefresh();
+  },
+
+  addTopic(lessonId,tileId){
+    const tile=getTile(lessonId,tileId);
+    const isSB=tile.type==='soru_bankasi';
+    openModal(`<div class="modal-head"><h2>Konu Ekle</h2></div>
+      <div class="form-row"><label>Konu adı</label><input type="text" id="f_name" placeholder="örn: Osmanlı Tarihi"></div>
+      ${isSB?`<div class="form-row"><label>Soru başına süre</label><input type="text" id="f_spq" value="1:30" placeholder="dk:sn ya da dakika"></div>`:''}
+      <div class="form-actions"><button class="btn" onclick="app.openTileModal('${lessonId}','${tileId}')">Vazgeç</button><button class="btn primary" onclick="app.doAddTopic('${lessonId}','${tileId}')">Ekle</button></div>`);
+  },
+  doAddTopic(lessonId,tileId){
+    const tile=getTile(lessonId,tileId);
+    const name=document.getElementById('f_name').value.trim();
+    if(!name){ app.openTileModal(lessonId,tileId); return; }
+    const topic={id:uid(),name,secondsPerQuestion:null,items:[],subtopics:[]};
+    if(tile.type==='soru_bankasi'){
+      topic.secondsPerQuestion = parseDuration(document.getElementById('f_spq').value)||90;
+    }
+    tile.topics.push(topic); save(); app.openTileModal(lessonId,tileId);
+  },
+  editTopic(lessonId,tileId,topicId){
+    const tile=getTile(lessonId,tileId);
+    const topic=findTopicRecursive(tile.topics,topicId);
+    const isSB=tile.type==='soru_bankasi';
+    openModal(`<div class="modal-head"><h2>Konuyu Düzenle</h2></div>
+      <div class="form-row"><label>Konu adı</label><input type="text" id="f_name" value="${esc(topic.name)}"></div>
+      ${isSB?`<div class="form-row"><label>Soru başına süre (boş = üst konudan miras alır)</label><input type="text" id="f_spq" value="${topic.secondsPerQuestion?secToMMSS(topic.secondsPerQuestion):''}" placeholder="dk:sn ya da dakika"></div>`:''}
+      <div class="form-actions"><button class="btn" onclick="app.openTileModal('${lessonId}','${tileId}')">Vazgeç</button><button class="btn primary" onclick="app.doEditTopic('${lessonId}','${tileId}','${topicId}')">Kaydet</button></div>`);
+  },
+  doEditTopic(lessonId,tileId,topicId){
+    const tile=getTile(lessonId,tileId);
+    const topic=findTopicRecursive(tile.topics,topicId);
+    const name=document.getElementById('f_name').value.trim();
+    if(name) topic.name=name;
+    if(tile.type==='soru_bankasi'){
+      const raw=document.getElementById('f_spq').value.trim();
+      topic.secondsPerQuestion = raw? (parseDuration(raw)||null) : null;
+    }
+    save(); app.openTileModal(lessonId,tileId);
+  },
+  deleteTopic(lessonId,tileId,topicId){
+    confirmDeleteModal('Bu konuyu (ve altındaki her şeyi) silmek istediğine emin misin?',
+      `app.doDeleteTopic('${lessonId}','${tileId}','${topicId}')`,
+      `app.openTileModal('${lessonId}','${tileId}')`);
+  },
+  doDeleteTopic(lessonId,tileId,topicId){
+    const tile=getTile(lessonId,tileId);
+    removeFromTree(tile.topics,topicId);
+    save(); app.openTileModal(lessonId,tileId);
+  },
+  toggleCollapse(lessonId,tileId,topicId){
+    const tile=getTile(lessonId,tileId);
+    const topic=findTopicRecursive(tile.topics,topicId);
+    topic.collapsed=!topic.collapsed;
+    save(); app.openTileModal(lessonId,tileId);
+  },
+  dragStartTopic(event,topicId){
+    draggedTopicId=topicId;
+    event.dataTransfer.setData('text/plain',topicId);
+    event.dataTransfer.effectAllowed='move';
+  },
+  dropOnTopic(event,lessonId,tileId,targetTopicId){
+    event.preventDefault();
+    if(!draggedTopicId || draggedTopicId===targetTopicId) return;
+    const tile=getTile(lessonId,tileId);
+    const draggedNode=findTopicRecursive(tile.topics,draggedTopicId);
+    if(!draggedNode){ draggedTopicId=null; return; }
+    if(containsTopic(draggedNode,targetTopicId)){ draggedTopicId=null; return; }
+    const extracted=extractTopic(tile.topics,draggedTopicId);
+    if(!extracted){ draggedTopicId=null; return; }
+    const target=findTopicRecursive(tile.topics,targetTopicId);
+    if(!target){ tile.topics.push(extracted); draggedTopicId=null; save(); app.openTileModal(lessonId,tileId); return; }
+    target.subtopics.push(extracted);
+    target.collapsed=false;
+    draggedTopicId=null;
+    save(); app.openTileModal(lessonId,tileId);
+  },
+
+  addSubtopic(lessonId,tileId,topicId){
+    const tile=getTile(lessonId,tileId);
+    const isSB=tile.type==='soru_bankasi';
+    openModal(`<div class="modal-head"><h2>Alt Konu Ekle</h2></div>
+      <div class="form-row"><label>Alt konu adı</label><input type="text" id="f_name" placeholder="örn: Duraklama Dönemi"></div>
+      ${isSB?`<div class="form-row"><label>Soru başına süre (boş = üst konudan miras alır)</label><input type="text" id="f_spq" placeholder="dk:sn ya da dakika"></div>`:''}
+      <div class="form-actions"><button class="btn" onclick="app.openTileModal('${lessonId}','${tileId}')">Vazgeç</button><button class="btn primary" onclick="app.doAddSubtopic('${lessonId}','${tileId}','${topicId}')">Ekle</button></div>`);
+  },
+  doAddSubtopic(lessonId,tileId,topicId){
+    const tile=getTile(lessonId,tileId);
+    const parent=findTopicRecursive(tile.topics,topicId);
+    const name=document.getElementById('f_name').value.trim();
+    if(!name){ app.openTileModal(lessonId,tileId); return; }
+    const sub={id:uid(),name,secondsPerQuestion:null,items:[],subtopics:[]};
+    if(tile.type==='soru_bankasi'){
+      const raw=document.getElementById('f_spq').value.trim();
+      if(raw) sub.secondsPerQuestion=parseDuration(raw);
+    }
+    parent.subtopics.push(sub); save(); app.openTileModal(lessonId,tileId);
+  },
+
+  addItem(lessonId,tileId,topicId){
+    const tile=getTile(lessonId,tileId);
+    const isSB=tile.type==='soru_bankasi';
+    openModal(`<div class="modal-head"><h2>${isSB?'Test Ekle':'Video Ekle'}</h2></div>
+      <div class="form-row"><label>${isSB?'Test adı':'Video başlığı'}</label><input type="text" id="f_name" placeholder="${isSB?'örn: Test 3':'örn: Fonksiyonlara Giriş'}"></div>
+      ${isSB?`<div class="form-row"><label>Soru sayısı</label><input type="number" id="f_count" min="1" value="20"></div>`
+            :`<div class="form-row"><label>Süre</label><input type="text" id="f_dur" placeholder="dk:sn ya da dakika" value="10:00"></div>`}
+      <div class="form-actions"><button class="btn" onclick="app.openTileModal('${lessonId}','${tileId}')">Vazgeç</button><button class="btn primary" onclick="app.doAddItem('${lessonId}','${tileId}','${topicId}')">Ekle</button></div>`);
+  },
+  doAddItem(lessonId,tileId,topicId){
+    const tile=getTile(lessonId,tileId);
+    const topic=findTopicRecursive(tile.topics,topicId);
+    const name=document.getElementById('f_name').value.trim();
+    if(!name){ app.openTileModal(lessonId,tileId); return; }
+    if(tile.type==='soru_bankasi'){
+      const cnt=parseInt(document.getElementById('f_count').value,10)||0;
+      topic.items.push({id:uid(),kind:'test',name,questionCount:cnt,done:false,doneAt:null});
+    } else {
+      const dur=parseDuration(document.getElementById('f_dur').value);
+      topic.items.push({id:uid(),kind:'video',title:name,durationSec:dur,done:false,doneAt:null});
+    }
+    save(); app.openTileModal(lessonId,tileId);
+  },
+  editItem(lessonId,tileId,itemId){
+    const tile=getTile(lessonId,tileId);
+    const item=findItemRecursive(tile.topics,itemId);
+    const isSB=tile.type==='soru_bankasi';
+    openModal(`<div class="modal-head"><h2>${isSB?'Testi Düzenle':'Videoyu Düzenle'}</h2></div>
+      <div class="form-row"><label>${isSB?'Test adı':'Video başlığı'}</label><input type="text" id="f_name" value="${esc(isSB?item.name:item.title)}"></div>
+      ${isSB?`<div class="form-row"><label>Soru sayısı</label><input type="number" id="f_count" min="1" value="${item.questionCount}"></div>`
+            :`<div class="form-row"><label>Süre</label><input type="text" id="f_dur" value="${secToMMSS(item.durationSec)}"></div>`}
+      <div class="form-actions"><button class="btn" onclick="app.openTileModal('${lessonId}','${tileId}')">Vazgeç</button><button class="btn primary" onclick="app.doEditItem('${lessonId}','${tileId}','${itemId}')">Kaydet</button></div>`);
+  },
+  doEditItem(lessonId,tileId,itemId){
+    const tile=getTile(lessonId,tileId);
+    const item=findItemRecursive(tile.topics,itemId);
+    const name=document.getElementById('f_name').value.trim();
+    if(tile.type==='soru_bankasi'){
+      if(name) item.name=name;
+      const cnt=parseInt(document.getElementById('f_count').value,10);
+      if(cnt) item.questionCount=cnt;
+    } else {
+      if(name) item.title=name;
+      item.durationSec=parseDuration(document.getElementById('f_dur').value);
+    }
+    save(); app.openTileModal(lessonId,tileId);
+  },
+  toggleItem(lessonId,tileId,itemId){
+    const tile=getTile(lessonId,tileId);
+    const item=findItemRecursive(tile.topics,itemId);
+    item.done=!item.done;
+    item.doneAt=item.done? new Date().toISOString(): null;
+    save(); renderAll();
+  },
+  toggleTopicAll(lessonId,tileId,topicId){
+    const tile=getTile(lessonId,tileId);
+    const topic=findTopicRecursive(tile.topics,topicId);
+    const items=collectItems(topic);
+    const allDone=items.length>0 && items.every(i=>i.done);
+    const newVal=!allDone;
+    const now=newVal? new Date().toISOString(): null;
+    items.forEach(i=>{ i.done=newVal; i.doneAt=now; });
+    save(); renderAll();
+  },
+  deleteItem(lessonId,tileId,itemId){
+    confirmDeleteModal('Bu öğeyi silmek istediğine emin misin?',
+      `app.doDeleteItem('${lessonId}','${tileId}','${itemId}')`,
+      `app.openTileModal('${lessonId}','${tileId}')`);
+  },
+  doDeleteItem(lessonId,tileId,itemId){
+    const tile=getTile(lessonId,tileId);
+    removeItemRecursive(tile.topics,itemId);
+    save(); app.openTileModal(lessonId,tileId);
+  },
+
+  editDefaultDuration(lessonId,tileId){
+    const tile=getTile(lessonId,tileId);
+    openModal(`<div class="modal-head"><h2>Varsayılan Süreyi Düzenle</h2></div>
+      <div class="form-row"><label>Süre</label><input type="text" id="f_dur" value="${secToMMSS(tile.defaultDurationSec)}" placeholder="dk:sn ya da dakika"></div>
+      <div class="form-actions"><button class="btn" onclick="app.openTileModal('${lessonId}','${tileId}')">Vazgeç</button><button class="btn primary" onclick="app.doEditDefaultDuration('${lessonId}','${tileId}')">Kaydet</button></div>`);
+  },
+  doEditDefaultDuration(lessonId,tileId){
+    const tile=getTile(lessonId,tileId);
+    const v=parseDuration(document.getElementById('f_dur').value);
+    if(v) tile.defaultDurationSec=v;
+    save(); app.openTileModal(lessonId,tileId);
+  },
+  addDenemeEntry(lessonId,tileId){
+    const tile=getTile(lessonId,tileId);
+    const defTotal = tile.defaultQuestionCount || 40;
+    openModal(`<div class="modal-head"><h2>Deneme Sonucu Ekle</h2></div>
+      <div id="f_err" style="color:var(--bad);font-size:12px;margin-bottom:8px;"></div>
+      <div class="form-row"><label>Tarih</label><input type="date" id="f_date" value="${todayISO()}"></div>
+      <div class="form-row"><label>Süre</label><input type="text" id="f_dur" value="${secToMMSS(tile.defaultDurationSec)}" placeholder="dk:sn ya da dakika"></div>
+      <div class="form-row"><label>Toplam Soru</label><input type="number" id="f_total" value="${defTotal}" oninput="app.updateDenemeCalc()"></div>
+      <div style="display:flex;gap:10px;">
+        <div class="form-row" style="flex:1;"><label>Doğru</label><input type="number" id="f_correct" value="0" oninput="app.updateDenemeCalc()"></div>
+        <div class="form-row" style="flex:1;"><label>Yanlış</label><input type="number" id="f_wrong" value="0" oninput="app.updateDenemeCalc()"></div>
+      </div>
+      <div class="form-row"><label>Hesaplanan</label><span id="f_calc" class="calc-preview">Boş: ${defTotal} · Net: 0.00</span></div>
+      <div class="form-actions"><button class="btn" onclick="app.openTileModal('${lessonId}','${tileId}')">Vazgeç</button><button class="btn primary" onclick="app.doAddDenemeEntry('${lessonId}','${tileId}')">Ekle</button></div>`);
+  },
+  updateDenemeCalc(){
+    const total=document.getElementById('f_total'), correct=document.getElementById('f_correct'), wrong=document.getElementById('f_wrong'), calc=document.getElementById('f_calc');
+    if(!total||!calc) return;
+    const r=calcNetDisplay(total.value,correct.value,wrong.value);
+    calc.textContent = r.invalid? 'Doğru+Yanlış toplam soru sayısını aşıyor!' : `Boş: ${r.blank} · Net: ${r.net.toFixed(2)}`;
+    calc.style.color = r.invalid? 'var(--bad)' : '';
+  },
+  doAddDenemeEntry(lessonId,tileId){
+    const tile=getTile(lessonId,tileId);
+    const date=document.getElementById('f_date').value || todayISO();
+    const dur=parseDuration(document.getElementById('f_dur').value)||tile.defaultDurationSec;
+    const r=calcNetDisplay(document.getElementById('f_total').value,document.getElementById('f_correct').value,document.getElementById('f_wrong').value);
+    if(r.invalid){ document.getElementById('f_err').textContent='Doğru+Yanlış toplam soru sayısını aşamaz, kontrol et.'; return; }
+    tile.defaultQuestionCount = r.total;
+    tile.entries.push({id:uid(),date,durationSec:dur,totalQuestions:r.total,correct:r.correct,wrong:r.wrong,blank:r.blank,net:r.net});
+    save(); app.openTileModal(lessonId,tileId);
+  },
+  deleteDenemeEntry(lessonId,tileId,entryId){
+    confirmDeleteModal('Bu deneme kaydını silmek istediğine emin misin?',
+      `app.doDeleteDenemeEntry('${lessonId}','${tileId}','${entryId}')`,
+      `app.openTileModal('${lessonId}','${tileId}')`);
+  },
+  doDeleteDenemeEntry(lessonId,tileId,entryId){
+    const tile=getTile(lessonId,tileId);
+    tile.entries=tile.entries.filter(e=>e.id!==entryId);
+    save(); app.openTileModal(lessonId,tileId);
+  },
+
+  addGenelDeneme(){
+    openModal(`<div class="modal-head"><h2>Genel Deneme Ekle</h2></div>
+      <div id="f_err" style="color:var(--bad);font-size:12px;margin-bottom:8px;"></div>
+      <div class="form-row"><label>Tarih</label><input type="date" id="f_date" value="${todayISO()}"></div>
+      <div class="form-row"><label>Süre</label><input type="text" id="f_dur" value="2:10:00" placeholder="sa:dk:sn ya da dakika"></div>
+      ${state.lessons.map(l=>`<div class="form-row"><label>${esc(l.name)}</label>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <input type="number" id="f_total_${l.id}" title="Toplam Soru" value="${l.lastGenelTotal||40}" style="width:70px" oninput="app.updateGenelCalc('${l.id}')">
+          <input type="number" id="f_correct_${l.id}" title="Doğru" value="0" style="width:70px" oninput="app.updateGenelCalc('${l.id}')">
+          <input type="number" id="f_wrong_${l.id}" title="Yanlış" value="0" style="width:70px" oninput="app.updateGenelCalc('${l.id}')">
+          <span id="f_calc_${l.id}" class="calc-preview">Boş: ${l.lastGenelTotal||40} · Net: 0.00</span>
+        </div>
+      </div>`).join('')}
+      <div class="form-actions"><button class="btn" onclick="app.closeModal()">Vazgeç</button><button class="btn primary" onclick="app.doAddGenelDeneme()">Ekle</button></div>`);
+  },
+  updateGenelCalc(lessonId){
+    const total=document.getElementById('f_total_'+lessonId), correct=document.getElementById('f_correct_'+lessonId), wrong=document.getElementById('f_wrong_'+lessonId), calc=document.getElementById('f_calc_'+lessonId);
+    if(!total) return;
+    const r=calcNetDisplay(total.value,correct.value,wrong.value);
+    calc.textContent = r.invalid? 'Doğru+Yanlış aşıyor!' : `Boş: ${r.blank} · Net: ${r.net.toFixed(2)}`;
+    calc.style.color = r.invalid? 'var(--bad)' : '';
+  },
+  doAddGenelDeneme(){
+    const date=document.getElementById('f_date').value || todayISO();
+    const dur=parseDuration(document.getElementById('f_dur').value)||7800;
+    const subjects={};
+    let anyInvalid=false;
+    for(const l of state.lessons){
+      const r=calcNetDisplay(document.getElementById('f_total_'+l.id).value,document.getElementById('f_correct_'+l.id).value,document.getElementById('f_wrong_'+l.id).value);
+      if(r.invalid) anyInvalid=true;
+      subjects[l.id]={total:r.total,correct:r.correct,wrong:r.wrong,blank:r.blank,net:r.net};
+    }
+    if(anyInvalid){ document.getElementById('f_err').textContent='Bir veya daha fazla derste Doğru+Yanlış toplam soru sayısını aşıyor, kontrol et.'; return; }
+    state.lessons.forEach(l=>{ l.lastGenelTotal=subjects[l.id].total; });
+    state.genelDenemeler.push({id:uid(),date,durationSec:dur,subjects});
+    save(); closeModal(); renderApp();
+  },
+  setGenelTrendView(v){ genelTrendView=v; renderApp(); },
+  deleteGenelDeneme(id){
+    confirmDeleteModal('Bu genel deneme kaydını silmek istediğine emin misin?',
+      `app.doDeleteGenelDeneme('${id}')`, `app.closeModal()`);
+  },
+  doDeleteGenelDeneme(id){
+    state.genelDenemeler=state.genelDenemeler.filter(e=>e.id!==id);
+    save(); closeModal(); renderApp();
+  },
+
+  openImportModal(lessonId,tileId){
+    const tile=getTile(lessonId,tileId);
+    let hint, placeholder;
+    if(tile.type==='video'){
+      hint='Her satır bir video. Format: <b>Konu;AltKonu;Video Başlığı;Süre</b> — AltKonu boş bırakılabilir, Süre "12:34" ya da "12.5" (dakika) olabilir.';
+      placeholder='Osmanlı Tarihi;;Giriş Videosu;12:34\nOsmanlı Tarihi;Duraklama Dönemi;Duraklama 1;8:00';
+    } else if(tile.type==='soru_bankasi'){
+      hint='Her satır bir test. Format: <b>Konu;AltKonu;Test Adı;Soru Sayısı;Soru Başı Süre(dk)</b> — AltKonu boş bırakılabilir, Soru Başı Süre bir konu için sadece ilk satırda yazılması yeterli (sonrakilerde boş bırakabilirsin).';
+      placeholder='Osmanlı Tarihi;;Test 1;20;1.5\nOsmanlı Tarihi;;Test 2;20;\nOsmanlı Tarihi;Duraklama Dönemi;Test 3;15;';
+    } else {
+      hint='Her satır bir deneme kaydı. Format: <b>Tarih(YYYY-AA-GG);Süre(dk);Net</b>';
+      placeholder='2026-08-01;40;15\n2026-08-08;40;18';
+    }
+    openModal(`<div class="modal-head"><h2>📥 Toplu Veri İçe Aktar</h2></div>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 8px;">${hint}</p>
+      <textarea id="f_bulk" rows="8" placeholder="${esc(placeholder)}"></textarea>
+      <div class="form-actions" style="margin-top:10px;"><button class="btn" onclick="app.openTileModal('${lessonId}','${tileId}')">Vazgeç</button><button class="btn primary" onclick="app.doImport('${lessonId}','${tileId}')">İçe Aktar</button></div>`);
+  },
+  doImport(lessonId,tileId){
+    const tile=getTile(lessonId,tileId);
+    const raw=document.getElementById('f_bulk').value;
+    const lines=raw.split('\n').map(l=>l.trim()).filter(l=>l && !l.startsWith('#'));
+    if(tile.type==='video') importVideoLines(tile,lines);
+    else if(tile.type==='soru_bankasi') importSoruLines(tile,lines);
+    else importDenemeLines(tile,lines);
+    save(); app.openTileModal(lessonId,tileId);
+  },
+
+  exportData(){
+    const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download='ders-takip-yedek-'+todayISO()+'.json';
+    a.click(); URL.revokeObjectURL(url);
+  },
+  importData(input){
+    const file=input.files[0];
+    if(!file) return;
+    const reader=new FileReader();
+    reader.onload=()=>{
+      try{
+        const parsed=JSON.parse(reader.result);
+        if(!parsed.lessons) throw new Error('geçersiz');
+        state=parsed; save(); renderApp();
+      }catch(e){ alert('Dosya okunamadı, geçerli bir yedek JSON dosyası seç.'); }
+      input.value='';
+    };
+    reader.readAsText(file);
+  },
+  resetData(){
+    confirmDeleteModal('TÜM veriler silinip başa dönülecek. Emin misin?', 'app.doResetData()', 'app.closeModal()');
+  },
+  doResetData(){
+    state=defaultState(); save(); closeModal(); renderApp();
+  }
+};
+window.app=app;
+
+load();
+renderApp();
+</script>
+</body>
+</html>
