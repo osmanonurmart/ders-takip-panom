@@ -127,26 +127,65 @@
   .empty{color:var(--muted);font-size:12px;text-align:center;padding:10px 0;}
   footer{padding:16px 20px 30px;color:var(--muted);font-size:11.5px;text-align:center;}
   input[type=file]{display:none;}
+
+  #authScreen{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:40;padding:20px;}
+  #authScreen .authbox{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:24px;width:100%;max-width:360px;}
+  #authScreen h2{font-size:18px;margin-bottom:14px;text-align:center;}
+  #authLoading{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--muted);z-index:41;}
 </style>
 </head>
 <body>
+<div id="authLoading">Yükleniyor...</div>
+<div id="authScreen">
+  <div class="authbox">
+    <h2>📚 Ders Takip Panom</h2>
+    <div id="auth_err" style="color:var(--bad);font-size:12px;margin-bottom:8px;"></div>
+    <div class="form-row"><label>Kullanıcı adı</label><input type="text" id="auth_user" autocomplete="username"></div>
+    <div class="form-row"><label>Şifre</label><input type="password" id="auth_pass" autocomplete="current-password"></div>
+    <div class="form-actions" style="justify-content:space-between;">
+      <button class="btn" onclick="app.doRegister()">Kayıt Ol</button>
+      <button class="btn primary" onclick="app.doLogin()">Giriş Yap</button>
+    </div>
+  </div>
+</div>
+
+<div id="mainApp" style="display:none;">
 <header class="top">
   <div class="top-row1">
     <h1>📚 Ders Takip Panom</h1>
     <div id="dashRow" class="dash"></div>
     <div class="top-spacer"></div>
+    <span id="authUserLabel" class="sub" style="margin-right:4px;"></span>
     <button class="btn" onclick="app.exportData()">⬇ Dışa Aktar</button>
     <button class="btn" onclick="document.getElementById('importFile').click()">⬆ Yedek Yükle</button>
     <input type="file" id="importFile" accept="application/json" onchange="app.importData(this)">
     <button class="btn danger" onclick="app.resetData()">Sıfırla</button>
+    <button class="btn" onclick="app.doLogout()">Çıkış Yap</button>
   </div>
 </header>
 <div id="app"></div>
-<footer>Veriler bu tarayıcının localStorage'ında saklanır. Düzenli olarak "Dışa Aktar" ile JSON yedek almanı öneririm.</footer>
+<footer>Veriler Firebase hesabına kaydedilir. Düzenli olarak "Dışa Aktar" ile JSON yedek almanı öneririm.</footer>
+</div>
 <div id="modalRoot"></div>
 
-<script>
-const KEY='dersTakipPanoData_v1';
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB6TsaGuk01fgMAPY1g4DFWqIimZA5Lphg",
+  authDomain: "ders-takip-panom.firebaseapp.com",
+  projectId: "ders-takip-panom",
+  storageBucket: "ders-takip-panom.firebasestorage.app",
+  messagingSenderId: "96601544186",
+  appId: "1:96601544186:web:6fd631fd6ca47859234043"
+};
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+let currentUser = null;
+function usernameToEmail(u){ return u.trim().toLowerCase().replace(/[^a-z0-9_.-]/g,'') + '@derstakippanom.local'; }
 const LESSON_NAMES=['Türkçe','Matematik','Coğrafya','Tarih','Vatandaşlık'];
 const EXAM_DATE='2026-10-04';
 const FINISH_DATE='2026-09-21';
@@ -193,12 +232,8 @@ function defaultState(){
     genelDenemeler: []
   };
 }
-function load(){
-  try{
-    const raw=localStorage.getItem(KEY);
-    state = raw? JSON.parse(raw) : defaultState();
-    if(!state || !state.lessons) state=defaultState();
-  }catch(e){ state=defaultState(); }
+function migrateState(){
+  if(!state || !state.lessons) state=defaultState();
   (state.genelDenemeler||[]).forEach(e=>{
     if(!e.subjects && e.nets){
       e.subjects={};
@@ -207,7 +242,17 @@ function load(){
     }
   });
 }
-function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+async function loadFromFirestore(){
+  try{
+    const snap = await getDoc(doc(db,'users',currentUser.uid));
+    state = (snap.exists() && snap.data().data) ? JSON.parse(snap.data().data) : defaultState();
+  }catch(e){ console.error('load failed',e); state=defaultState(); }
+  migrateState();
+}
+function save(){
+  if(!currentUser) return;
+  setDoc(doc(db,'users',currentUser.uid), {data: JSON.stringify(state)}).catch(e=>console.error('save failed',e));
+}
 
 /* ---------- lookups ---------- */
 function getLesson(lessonId){ return state.lessons.find(l=>l.id===lessonId); }
@@ -1115,12 +1160,51 @@ const app = {
   },
   doResetData(){
     state=defaultState(); save(); closeModal(); renderApp();
+  },
+
+  doLogin(){
+    const u=document.getElementById('auth_user').value.trim();
+    const p=document.getElementById('auth_pass').value;
+    const errEl=document.getElementById('auth_err');
+    errEl.textContent='';
+    if(!u||!p){ errEl.textContent='Kullanıcı adı ve şifre gerekli.'; return; }
+    signInWithEmailAndPassword(auth, usernameToEmail(u), p).catch(err=>{
+      errEl.textContent = err.code==='auth/invalid-credential' || err.code==='auth/wrong-password' || err.code==='auth/user-not-found'
+        ? 'Kullanıcı adı veya şifre hatalı.' : 'Giriş yapılamadı: '+err.message;
+    });
+  },
+  doRegister(){
+    const u=document.getElementById('auth_user').value.trim();
+    const p=document.getElementById('auth_pass').value;
+    const errEl=document.getElementById('auth_err');
+    errEl.textContent='';
+    if(!u||!p){ errEl.textContent='Kullanıcı adı ve şifre gerekli.'; return; }
+    if(p.length<6){ errEl.textContent='Şifre en az 6 karakter olmalı.'; return; }
+    createUserWithEmailAndPassword(auth, usernameToEmail(u), p).catch(err=>{
+      errEl.textContent = err.code==='auth/email-already-in-use' ? 'Bu kullanıcı adı zaten kayıtlı.' : 'Kayıt olunamadı: '+err.message;
+    });
+  },
+  doLogout(){
+    signOut(auth);
   }
 };
 window.app=app;
 
-load();
-renderApp();
+onAuthStateChanged(auth, async (user)=>{
+  document.getElementById('authLoading').style.display='none';
+  if(user){
+    currentUser=user;
+    document.getElementById('authScreen').style.display='none';
+    document.getElementById('mainApp').style.display='';
+    document.getElementById('authUserLabel').textContent = user.email.split('@')[0];
+    await loadFromFirestore();
+    renderApp();
+  } else {
+    currentUser=null;
+    document.getElementById('mainApp').style.display='none';
+    document.getElementById('authScreen').style.display='flex';
+  }
+});
 </script>
 </body>
 </html>
