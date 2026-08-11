@@ -40,7 +40,7 @@
   .pace-arrow{position:absolute;top:-7px;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid var(--text);transform:translateX(-50%);}
   .pace-scores{font-size:9.5px;color:var(--muted);margin-top:3px;display:flex;flex-wrap:wrap;gap:5px;}
 
-  .board{display:grid;gap:14px;padding:18px 20px 20px;overflow-x:auto;}
+  .board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(230px,1fr);gap:14px;padding:18px 20px 20px;overflow-x:auto;}
   .column{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px;min-width:0;}
   .column .col-head{display:flex;flex-direction:column;align-items:center;gap:6px;}
   .col-head .lname{font-size:15px;font-weight:700;cursor:pointer;}
@@ -129,25 +129,23 @@
   input[type=file]{display:none;}
 
   #authScreen{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:40;padding:20px;}
-  #authScreen .authbox{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:24px;width:100%;max-width:360px;}
-  #authScreen h2{font-size:18px;margin-bottom:14px;text-align:center;}
+  #authScreen .authbox{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:28px;width:100%;max-width:560px;text-align:center;}
+  #authScreen h2{font-size:20px;margin-bottom:18px;text-align:center;}
   #authLoading{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--muted);z-index:41;}
+  .profile-grid{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;margin:10px 0 20px;}
+  .profile-tile{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;position:relative;width:90px;}
+  .profile-avatar{width:72px;height:72px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#08141f;transition:outline .1s;}
+  .profile-avatar.add{background:var(--panel2);color:var(--muted);border:2px dashed var(--border);}
+  .profile-name{font-size:13px;color:var(--text);text-align:center;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .profile-tile:hover .profile-avatar{outline:3px solid var(--text);}
+  .profile-edit-actions{position:absolute;top:-6px;right:-2px;display:flex;gap:2px;background:var(--panel);border-radius:6px;padding:2px;}
+  #profileChip{display:flex;align-items:center;gap:6px;}
+  .profile-chip-avatar{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#08141f;}
 </style>
 </head>
 <body>
 <div id="authLoading">Yükleniyor...</div>
-<div id="authScreen">
-  <div class="authbox">
-    <h2>📚 Ders Takip Panom</h2>
-    <div id="auth_err" style="color:var(--bad);font-size:12px;margin-bottom:8px;"></div>
-    <div class="form-row"><label>Kullanıcı adı</label><input type="text" id="auth_user" autocomplete="username"></div>
-    <div class="form-row"><label>Şifre</label><input type="password" id="auth_pass" autocomplete="current-password"></div>
-    <div class="form-actions" style="justify-content:space-between;">
-      <button class="btn" onclick="app.doRegister()">Kayıt Ol</button>
-      <button class="btn primary" onclick="app.doLogin()">Giriş Yap</button>
-    </div>
-  </div>
-</div>
+<div id="authScreen"></div>
 
 <div id="mainApp" style="display:none;">
 <header class="top">
@@ -155,23 +153,22 @@
     <h1>📚 Ders Takip Panom</h1>
     <div id="dashRow" class="dash"></div>
     <div class="top-spacer"></div>
-    <span id="authUserLabel" class="sub" style="margin-right:4px;"></span>
+    <button class="btn" id="profileChip" onclick="app.switchProfile()"></button>
     <button class="btn" onclick="app.exportData()">⬇ Dışa Aktar</button>
     <button class="btn" onclick="document.getElementById('importFile').click()">⬆ Yedek Yükle</button>
     <input type="file" id="importFile" accept="application/json" onchange="app.importData(this)">
     <button class="btn danger" onclick="app.resetData()">Sıfırla</button>
-    <button class="btn" onclick="app.doLogout()">Çıkış Yap</button>
   </div>
 </header>
 <div id="app"></div>
-<footer>Veriler Firebase hesabına kaydedilir. Düzenli olarak "Dışa Aktar" ile JSON yedek almanı öneririm.</footer>
+<footer>Veriler Firebase'e kaydedilir. Düzenli olarak "Dışa Aktar" ile JSON yedek almanı öneririm.</footer>
 </div>
 <div id="modalRoot"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyB6TsaGuk01fgMAPY1g4DFWqIimZA5Lphg",
@@ -184,8 +181,11 @@ const firebaseConfig = {
 const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
-let currentUser = null;
-function usernameToEmail(u){ return u.trim().toLowerCase().replace(/[^a-z0-9_.-]/g,'') + '@derstakippanom.local'; }
+let currentProfileId = null;
+let profilesCache = [];
+let profileEditMode = false;
+const PROFILE_COLORS=['#e5534b','#f0b429','#3ecf8e','#4fd1c5','#5b8def','#8b5cf6','#ec4899','#f59e0b'];
+function colorForProfile(id){ let h=0; for(const c of id) h=(h*31+c.charCodeAt(0))%PROFILE_COLORS.length; return PROFILE_COLORS[h]; }
 const LESSON_NAMES=['Türkçe','Matematik','Coğrafya','Tarih','Vatandaşlık'];
 const EXAM_DATE='2026-10-04';
 const FINISH_DATE='2026-09-21';
@@ -244,14 +244,14 @@ function migrateState(){
 }
 async function loadFromFirestore(){
   try{
-    const snap = await getDoc(doc(db,'users',currentUser.uid));
+    const snap = await getDoc(doc(db,'profiles',currentProfileId));
     state = (snap.exists() && snap.data().data) ? JSON.parse(snap.data().data) : defaultState();
   }catch(e){ console.error('load failed',e); state=defaultState(); }
   migrateState();
 }
 function save(){
-  if(!currentUser) return;
-  setDoc(doc(db,'users',currentUser.uid), {data: JSON.stringify(state)}).catch(e=>console.error('save failed',e));
+  if(!currentProfileId) return;
+  setDoc(doc(db,'profiles',currentProfileId), {data: JSON.stringify(state)}, {merge:true}).catch(e=>console.error('save failed',e));
 }
 
 /* ---------- lookups ---------- */
@@ -501,7 +501,7 @@ function todayColumnHtml(){
   </div>`;
 }
 function boardHtml(){
-  return `<div class="board" style="grid-template-columns:repeat(${state.lessons.length+1},1fr)">${todayColumnHtml()}${state.lessons.map(l=>columnHtml(l)).join('')}</div>`;
+  return `<div class="board">${todayColumnHtml()}${state.lessons.map(l=>columnHtml(l)).join('')}</div>`;
 }
 function columnHtml(l){
   const s=lessonStats(l);
@@ -1162,47 +1162,109 @@ const app = {
     state=defaultState(); save(); closeModal(); renderApp();
   },
 
-  doLogin(){
-    const u=document.getElementById('auth_user').value.trim();
-    const p=document.getElementById('auth_pass').value;
-    const errEl=document.getElementById('auth_err');
-    errEl.textContent='';
-    if(!u||!p){ errEl.textContent='Kullanıcı adı ve şifre gerekli.'; return; }
-    signInWithEmailAndPassword(auth, usernameToEmail(u), p).catch(err=>{
-      errEl.textContent = err.code==='auth/invalid-credential' || err.code==='auth/wrong-password' || err.code==='auth/user-not-found'
-        ? 'Kullanıcı adı veya şifre hatalı.' : 'Giriş yapılamadı: '+err.message;
-    });
+  toggleProfileEdit(){ profileEditMode=!profileEditMode; showProfilePicker(); },
+  addProfile(){
+    openModal(`<div class="modal-head"><h2>Profil Ekle</h2></div>
+      <div class="form-row"><label>İsim</label><input type="text" id="f_name" placeholder="örn: Onur"></div>
+      <div class="form-actions"><button class="btn" onclick="app.closeProfileModal()">Vazgeç</button><button class="btn primary" onclick="app.doAddProfile()">Ekle</button></div>`);
   },
-  doRegister(){
-    const u=document.getElementById('auth_user').value.trim();
-    const p=document.getElementById('auth_pass').value;
-    const errEl=document.getElementById('auth_err');
-    errEl.textContent='';
-    if(!u||!p){ errEl.textContent='Kullanıcı adı ve şifre gerekli.'; return; }
-    if(p.length<6){ errEl.textContent='Şifre en az 6 karakter olmalı.'; return; }
-    createUserWithEmailAndPassword(auth, usernameToEmail(u), p).catch(err=>{
-      errEl.textContent = err.code==='auth/email-already-in-use' ? 'Bu kullanıcı adı zaten kayıtlı.' : 'Kayıt olunamadı: '+err.message;
-    });
+  async doAddProfile(){
+    const name=document.getElementById('f_name').value.trim();
+    if(!name) return;
+    const newRef = doc(collection(db,'profiles'));
+    await setDoc(newRef, {name, data: JSON.stringify(defaultState())});
+    closeModal();
+    await loadProfiles();
+    showProfilePicker();
   },
-  doLogout(){
-    signOut(auth);
+  renameProfile(id){
+    const p=profilesCache.find(x=>x.id===id);
+    openModal(`<div class="modal-head"><h2>Profili Düzenle</h2></div>
+      <div class="form-row"><label>İsim</label><input type="text" id="f_name" value="${esc(p.name)}"></div>
+      <div class="form-actions"><button class="btn" onclick="app.closeProfileModal()">Vazgeç</button><button class="btn primary" onclick="app.doRenameProfile('${id}')">Kaydet</button></div>`);
+  },
+  async doRenameProfile(id){
+    const name=document.getElementById('f_name').value.trim();
+    if(name) await setDoc(doc(db,'profiles',id), {name}, {merge:true});
+    closeModal();
+    await loadProfiles();
+    showProfilePicker();
+    if(id===currentProfileId) updateProfileChip();
+  },
+  deleteProfile(id){
+    confirmDeleteModal('Bu profili ve tüm verisini silmek istediğine emin misin?',
+      `app.doDeleteProfile('${id}')`, `app.closeProfileModal()`);
+  },
+  async doDeleteProfile(id){
+    await deleteDoc(doc(db,'profiles',id));
+    if(getSavedProfileId()===id) clearSavedProfileId();
+    closeModal();
+    await loadProfiles();
+    showProfilePicker();
+  },
+  closeProfileModal(){ closeModal(); },
+  async selectProfile(id){
+    currentProfileId=id;
+    setSavedProfileId(id);
+    document.getElementById('authScreen').style.display='none';
+    document.getElementById('mainApp').style.display='';
+    updateProfileChip();
+    await loadFromFirestore();
+    renderApp();
+  },
+  switchProfile(){
+    document.getElementById('mainApp').style.display='none';
+    loadProfiles().then(()=>showProfilePicker());
   }
 };
 window.app=app;
 
+function updateProfileChip(){
+  const p=profilesCache.find(x=>x.id===currentProfileId);
+  const name=p?p.name:'';
+  document.getElementById('profileChip').innerHTML = `<span class="profile-chip-avatar" style="background:${colorForProfile(currentProfileId||'x')}">${esc(name.slice(0,1).toUpperCase())}</span>${esc(name)}`;
+}
+async function loadProfiles(){
+  const snap = await getDocs(collection(db,'profiles'));
+  profilesCache = snap.docs.map(d=>({id:d.id, name:d.data().name||'İsimsiz'}));
+}
+function showProfilePicker(){
+  document.getElementById('authScreen').style.display='flex';
+  document.getElementById('authScreen').innerHTML = `<div class="authbox">
+    <h2>📚 Kim çalışıyor?</h2>
+    <div class="profile-grid">
+      ${profilesCache.map(p=>`
+        <div class="profile-tile" ${profileEditMode?'':`onclick="app.selectProfile('${p.id}')"`}>
+          <div class="profile-avatar" style="background:${colorForProfile(p.id)}">${esc(p.name.slice(0,1).toUpperCase())}</div>
+          <div class="profile-name">${esc(p.name)}</div>
+          ${profileEditMode?`<div class="profile-edit-actions">
+            <button class="icon-btn" onclick="app.renameProfile('${p.id}')" title="Düzenle">✎</button>
+            <button class="icon-btn danger" onclick="app.deleteProfile('${p.id}')" title="Sil">✕</button>
+          </div>`:''}
+        </div>`).join('')}
+      <div class="profile-tile" onclick="app.addProfile()">
+        <div class="profile-avatar add">+</div>
+        <div class="profile-name">Profil Ekle</div>
+      </div>
+    </div>
+    <button class="btn" onclick="app.toggleProfileEdit()">${profileEditMode?'Bitti':'Düzenle'}</button>
+  </div>`;
+}
+
+function getSavedProfileId(){ try{ return localStorage.getItem('dtp_profile'); }catch(e){ return null; } }
+function setSavedProfileId(id){ try{ localStorage.setItem('dtp_profile', id); }catch(e){} }
+function clearSavedProfileId(){ try{ localStorage.removeItem('dtp_profile'); }catch(e){} }
+
+signInAnonymously(auth).catch(e=>console.error('anon auth failed',e));
 onAuthStateChanged(auth, async (user)=>{
+  if(!user) return;
   document.getElementById('authLoading').style.display='none';
-  if(user){
-    currentUser=user;
-    document.getElementById('authScreen').style.display='none';
-    document.getElementById('mainApp').style.display='';
-    document.getElementById('authUserLabel').textContent = user.email.split('@')[0];
-    await loadFromFirestore();
-    renderApp();
+  await loadProfiles();
+  const savedId = getSavedProfileId();
+  if(savedId && profilesCache.find(p=>p.id===savedId)){
+    await app.selectProfile(savedId);
   } else {
-    currentUser=null;
-    document.getElementById('mainApp').style.display='none';
-    document.getElementById('authScreen').style.display='flex';
+    showProfilePicker();
   }
 });
 </script>
