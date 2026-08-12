@@ -304,17 +304,11 @@ function removeItemRecursive(topics,itemId){
 
 /* ---------- bulk import parsers ---------- */
 function importVideoLines(tile,lines){
+  if(tile.topics.length===0){ tile.topics.push({id:uid(),name:'',secondsPerQuestion:null,items:[],subtopics:[]}); }
+  const target=tile.topics[tile.topics.length-1];
   for(const line of lines){
-    const [konuName,altName,title,durStr]=line.split(';').map(s=>(s||'').trim());
-    if(!konuName || !title) continue;
-    let konu=tile.topics.find(t=>t.name===konuName);
-    if(!konu){ konu={id:uid(),name:konuName,secondsPerQuestion:null,items:[],subtopics:[]}; tile.topics.push(konu); }
-    let target=konu;
-    if(altName){
-      let sub=konu.subtopics.find(s=>s.name===altName);
-      if(!sub){ sub={id:uid(),name:altName,secondsPerQuestion:null,items:[],subtopics:[]}; konu.subtopics.push(sub); }
-      target=sub;
-    }
+    const [title,durStr]=line.split(';').map(s=>(s||'').trim());
+    if(!title) continue;
     target.items.push({id:uid(),kind:'video',title,durationSec:parseDuration(durStr),done:false,doneAt:null});
   }
 }
@@ -675,6 +669,13 @@ function tileModalHtml(lessonId,tileId){
           <td><button class="btn small danger" onclick="app.deleteDenemeEntry('${lessonId}','${tileId}','${e.id}')">Sil</button></td></tr>`;
       }).join('')}
     </table></div>` : '<div class="empty">Henüz deneme kaydı yok</div>'}`;
+  } else if(tile.type==='video'){
+    const s=tileStats(tile);
+    const pct = s.totalSec>0? Math.round(s.doneSec/s.totalSec*100):0;
+    const flatItems = tile.topics.flatMap(t=>collectItems(t));
+    body = `<div class="progress-line"><span>%${pct}</span><div class="mbar"><i style="width:${pct}%"></i></div><span>${secToHM(s.doneSec)} / ${secToHM(s.totalSec)}</span></div>
+    <button class="btn primary" onclick="app.addVideoFlat('${lessonId}','${tileId}')" style="margin-bottom:8px;">+ Video Ekle</button>
+    ${flatItems.length? flatItems.map(it=>itemHtml(it,lessonId,tileId,'video',null)).join('') : '<div class="empty">Henüz video yok</div>'}`;
   } else {
     const s=tileStats(tile);
     const pct = s.totalSec>0? Math.round(s.doneSec/s.totalSec*100):0;
@@ -707,7 +708,7 @@ function topicHtml(topic,lessonId,tileId,type,inheritedSPQ,depth){
       <input type="checkbox" class="round-check" ${allDone?'checked':''} onclick="app.toggleTopicAll('${lessonId}','${tileId}','${topic.id}')" title="Tümünü tikle/aç">
       <span class="tname" style="font-size:${fontSize}px;font-weight:${fontWeight};color:${nameColor};" onclick="app.editTopic('${lessonId}','${tileId}','${topic.id}')" title="Düzenle">${esc(topic.name)}</span>
       ${type==='soru_bankasi'? `<span class="badge">${(spq/60).toFixed(1)} dk/soru</span>`:''}
-      <button class="icon-btn" onclick="app.addItem('${lessonId}','${tileId}','${topic.id}')" title="${type==='soru_bankasi'?'Test Ekle':'Video Ekle'}">+</button>
+      <button class="icon-btn" onclick="app.addItem('${lessonId}','${tileId}','${topic.id}')" title="Test Ekle">+</button>
       <button class="icon-btn danger" onclick="app.deleteTopic('${lessonId}','${tileId}','${topic.id}')" title="Sil">✕</button>
     </div>
     ${collapsed? '' : `${topic.items.map(it=>itemHtml(it,lessonId,tileId,type,spq)).join('')}${topic.subtopics.map(st=>topicHtml(st,lessonId,tileId,type,spq,depth+1)).join('')}`}
@@ -934,12 +935,9 @@ const app = {
   },
 
   addItem(lessonId,tileId,topicId){
-    const tile=getTile(lessonId,tileId);
-    const isSB=tile.type==='soru_bankasi';
-    openModal(`<div class="modal-head"><h2>${isSB?'Test Ekle':'Video Ekle'}</h2></div>
-      <div class="form-row"><label>${isSB?'Test adı':'Video başlığı'}</label><input type="text" id="f_name" placeholder="${isSB?'örn: Test 3':'örn: Fonksiyonlara Giriş'}"></div>
-      ${isSB?`<div class="form-row"><label>Soru sayısı</label><input type="number" id="f_count" min="1" value="20"></div>`
-            :`<div class="form-row"><label>Süre</label><input type="text" id="f_dur" placeholder="dk:sn ya da dakika" value="10:00"></div>`}
+    openModal(`<div class="modal-head"><h2>Test Ekle</h2></div>
+      <div class="form-row"><label>Test adı</label><input type="text" id="f_name" placeholder="örn: Test 3"></div>
+      <div class="form-row"><label>Soru sayısı</label><input type="number" id="f_count" min="1" value="20"></div>
       <div class="form-actions"><button class="btn" onclick="app.openTileModal('${lessonId}','${tileId}')">Vazgeç</button><button class="btn primary" onclick="app.doAddItem('${lessonId}','${tileId}','${topicId}')">Ekle</button></div>`);
   },
   doAddItem(lessonId,tileId,topicId){
@@ -947,13 +945,24 @@ const app = {
     const topic=findTopicRecursive(tile.topics,topicId);
     const name=document.getElementById('f_name').value.trim();
     if(!name){ app.openTileModal(lessonId,tileId); return; }
-    if(tile.type==='soru_bankasi'){
-      const cnt=parseInt(document.getElementById('f_count').value,10)||0;
-      topic.items.push({id:uid(),kind:'test',name,questionCount:cnt,done:false,doneAt:null});
-    } else {
-      const dur=parseDuration(document.getElementById('f_dur').value);
-      topic.items.push({id:uid(),kind:'video',title:name,durationSec:dur,done:false,doneAt:null});
-    }
+    const cnt=parseInt(document.getElementById('f_count').value,10)||0;
+    topic.items.push({id:uid(),kind:'test',name,questionCount:cnt,done:false,doneAt:null});
+    save(); app.openTileModal(lessonId,tileId);
+  },
+  addVideoFlat(lessonId,tileId){
+    openModal(`<div class="modal-head"><h2>Video Ekle</h2></div>
+      <div class="form-row"><label>Video başlığı</label><input type="text" id="f_name" placeholder="örn: Fonksiyonlara Giriş"></div>
+      <div class="form-row"><label>Süre</label><input type="text" id="f_dur" placeholder="dk:sn ya da dakika" value="10:00"></div>
+      <div class="form-actions"><button class="btn" onclick="app.openTileModal('${lessonId}','${tileId}')">Vazgeç</button><button class="btn primary" onclick="app.doAddVideoFlat('${lessonId}','${tileId}')">Ekle</button></div>`);
+  },
+  doAddVideoFlat(lessonId,tileId){
+    const tile=getTile(lessonId,tileId);
+    const name=document.getElementById('f_name').value.trim();
+    if(!name){ app.openTileModal(lessonId,tileId); return; }
+    if(tile.topics.length===0){ tile.topics.push({id:uid(),name:'',secondsPerQuestion:null,items:[],subtopics:[]}); }
+    const target=tile.topics[tile.topics.length-1];
+    const dur=parseDuration(document.getElementById('f_dur').value);
+    target.items.push({id:uid(),kind:'video',title:name,durationSec:dur,done:false,doneAt:null});
     save(); app.openTileModal(lessonId,tileId);
   },
   editItem(lessonId,tileId,itemId){
@@ -1114,8 +1123,8 @@ const app = {
     const tile=getTile(lessonId,tileId);
     let hint, placeholder;
     if(tile.type==='video'){
-      hint='Her satır bir video. Format: <b>Konu;AltKonu;Video Başlığı;Süre</b> — AltKonu boş bırakılabilir, Süre "12:34" ya da "12.5" (dakika) olabilir.';
-      placeholder='Osmanlı Tarihi;;Giriş Videosu;12:34\nOsmanlı Tarihi;Duraklama Dönemi;Duraklama 1;8:00';
+      hint='Her satır bir video. Format: <b>Video Başlığı;Süre</b> — Süre "12:34" ya da "12.5" (dakika) olabilir. Videolar yazdığın sırayla eklenir, konu başlığı gösterilmez.';
+      placeholder='Giriş Videosu;12:34\nDuraklama 1;8:00\nDuraklama 2;7:30';
     } else if(tile.type==='soru_bankasi'){
       hint='Her satır bir test. Format: <b>Konu;AltKonu;Test Adı;Soru Sayısı;Soru Başı Süre(dk)</b> — AltKonu boş bırakılabilir, Soru Başı Süre bir konu için sadece ilk satırda yazılması yeterli (sonrakilerde boş bırakabilirsin).';
       placeholder='Osmanlı Tarihi;;Test 1;20;1.5\nOsmanlı Tarihi;;Test 2;20;\nOsmanlı Tarihi;Duraklama Dönemi;Test 3;15;';
