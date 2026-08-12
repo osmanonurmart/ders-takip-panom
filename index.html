@@ -691,22 +691,26 @@ function tileModalHtml(lessonId,tileId){
   </div>
   ${body}`;
 }
-function topicHtml(topic,lessonId,tileId,type,inheritedSPQ){
+function topicHtml(topic,lessonId,tileId,type,inheritedSPQ,depth){
+  depth = depth||0;
   const spq = effectiveSPQ(topic,inheritedSPQ);
   const allItems = collectItems(topic);
   const allDone = allItems.length>0 && allItems.every(i=>i.done);
   const collapsed = !!topic.collapsed;
+  const fontSize = Math.max(11, 15-depth);
+  const fontWeight = depth===0?700:depth===1?650:600;
+  const nameColor = depth<=1 ? 'var(--text)' : 'var(--muted)';
   return `<div class="topic" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="this.classList.remove('drag-over');app.dropOnTopic(event,'${lessonId}','${tileId}','${topic.id}')">
     <div class="topic-row">
       <span class="drag-handle" draggable="true" ondragstart="app.dragStartTopic(event,'${topic.id}')" title="Sürükleyip başka bir konunun altına taşı">⠿</span>
       <button class="collapse-btn" onclick="app.toggleCollapse('${lessonId}','${tileId}','${topic.id}')" title="Aç/Kapat">${collapsed?'▶':'▼'}</button>
       <input type="checkbox" class="round-check" ${allDone?'checked':''} onclick="app.toggleTopicAll('${lessonId}','${tileId}','${topic.id}')" title="Tümünü tikle/aç">
-      <span class="tname" onclick="app.editTopic('${lessonId}','${tileId}','${topic.id}')" title="Düzenle">${esc(topic.name)}</span>
+      <span class="tname" style="font-size:${fontSize}px;font-weight:${fontWeight};color:${nameColor};" onclick="app.editTopic('${lessonId}','${tileId}','${topic.id}')" title="Düzenle">${esc(topic.name)}</span>
       ${type==='soru_bankasi'? `<span class="badge">${(spq/60).toFixed(1)} dk/soru</span>`:''}
       <button class="icon-btn" onclick="app.addItem('${lessonId}','${tileId}','${topic.id}')" title="${type==='soru_bankasi'?'Test Ekle':'Video Ekle'}">+</button>
       <button class="icon-btn danger" onclick="app.deleteTopic('${lessonId}','${tileId}','${topic.id}')" title="Sil">✕</button>
     </div>
-    ${collapsed? '' : `${topic.items.map(it=>itemHtml(it,lessonId,tileId,type,spq)).join('')}${topic.subtopics.map(st=>topicHtml(st,lessonId,tileId,type,spq)).join('')}`}
+    ${collapsed? '' : `${topic.items.map(it=>itemHtml(it,lessonId,tileId,type,spq)).join('')}${topic.subtopics.map(st=>topicHtml(st,lessonId,tileId,type,spq,depth+1)).join('')}`}
   </div>`;
 }
 function itemHtml(item,lessonId,tileId,type,spq){
