@@ -154,6 +154,7 @@
     <div id="dashRow" class="dash"></div>
     <div class="top-spacer"></div>
     <button class="btn" id="profileChip" onclick="app.switchProfile()"></button>
+    <span id="saveStatus" class="sub"></span>
     <button class="btn" onclick="app.exportData()">⬇ Dışa Aktar</button>
     <button class="btn" onclick="document.getElementById('importFile').click()">⬆ Yedek Yükle</button>
     <input type="file" id="importFile" accept="application/json" onchange="app.importData(this)">
@@ -243,15 +244,27 @@ function migrateState(){
   });
 }
 async function loadFromFirestore(){
-  try{
-    const snap = await getDoc(doc(db,'profiles',currentProfileId));
-    state = (snap.exists() && snap.data().data) ? JSON.parse(snap.data().data) : defaultState();
-  }catch(e){ console.error('load failed',e); state=defaultState(); }
+  const snap = await getDoc(doc(db,'profiles',currentProfileId));
+  state = (snap.exists() && snap.data().data) ? JSON.parse(snap.data().data) : defaultState();
   migrateState();
 }
+let pendingSaveCount = 0;
+function updateSaveIndicator(text,color){
+  const el=document.getElementById('saveStatus');
+  if(!el) return;
+  el.textContent = text||'';
+  el.style.color = color||'var(--muted)';
+}
 function save(){
-  if(!currentProfileId) return;
-  setDoc(doc(db,'profiles',currentProfileId), {data: JSON.stringify(state)}, {merge:true}).catch(e=>console.error('save failed',e));
+  if(!currentProfileId || state===null){ console.error('save blocked: no valid state loaded'); return; }
+  pendingSaveCount++;
+  updateSaveIndicator('Kaydediliyor…');
+  const payload = JSON.stringify(state);
+  const attempt = ()=> setDoc(doc(db,'profiles',currentProfileId), {data: payload}, {merge:true});
+  attempt().catch(err=>{ console.error('save failed, retrying once',err); return attempt(); })
+    .then(()=>{ updateSaveIndicator(''); })
+    .catch(err=>{ console.error('save failed after retry',err); updateSaveIndicator('⚠ Kaydedilemedi, bağlantını kontrol et','var(--bad)'); })
+    .finally(()=>{ pendingSaveCount--; });
 }
 
 /* ---------- lookups ---------- */
@@ -1218,11 +1231,23 @@ const app = {
   closeProfileModal(){ closeModal(); },
   async selectProfile(id){
     currentProfileId=id;
+    try{
+      await loadFromFirestore();
+    }catch(e){
+      console.error('profile load failed',e);
+      state=null;
+      document.getElementById('authScreen').style.display='flex';
+      document.getElementById('authScreen').innerHTML = `<div class="authbox">
+        <h2>⚠️ Veri yüklenemedi</h2>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">İnternet bağlantını kontrol edip tekrar dene. Verilerin kaybolmaması için tekrar denemeden mevcut sekmeyi kapatma.</p>
+        <button class="btn primary" onclick="app.selectProfile('${id}')">Tekrar Dene</button>
+      </div>`;
+      return;
+    }
     setSavedProfileId(id);
     document.getElementById('authScreen').style.display='none';
     document.getElementById('mainApp').style.display='';
     updateProfileChip();
-    await loadFromFirestore();
     renderApp();
   },
   switchProfile(){
@@ -1278,6 +1303,19 @@ onAuthStateChanged(auth, async (user)=>{
     await app.selectProfile(savedId);
   } else {
     showProfilePicker();
+  }
+});
+
+document.addEventListener('visibilitychange', async ()=>{
+  if(document.visibilityState==='visible' && currentProfileId && pendingSaveCount===0){
+    try{
+      const snap = await getDoc(doc(db,'profiles',currentProfileId));
+      if(snap.exists() && snap.data().data){
+        state = JSON.parse(snap.data().data);
+        migrateState();
+        renderApp();
+      }
+    }catch(e){ console.error('refresh on focus failed',e); }
   }
 });
 </script>
