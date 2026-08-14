@@ -176,6 +176,7 @@
 </header>
 <div id="app"></div>
 <footer>Veriler Firebase'e kaydedilir. Düzenli olarak "Dışa Aktar" ile JSON yedek almanı öneririm.</footer>
+<button class="btn danger" onclick="app.resetProfileData()" title="Bu profildeki tüm video/soru bankası/deneme verilerini sil" style="position:fixed;right:20px;bottom:20px;z-index:30;">🗑 Sıfırla</button>
 </div>
 <div id="modalRoot"></div>
 
@@ -950,6 +951,25 @@ function todayItemHtml(item,lessonId,tileId){
 /* ---------- app actions ---------- */
 const app = {
   closeModal(){ closeModal(); },
+
+  resetProfileData(){
+    const p = profilesCache.find(x=>x.id===currentProfileId);
+    openModal(`<div class="modal-head"><h2>⚠️ Verileri Sıfırla</h2></div>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 12px;"><b>${esc(p?p.name:'')}</b> profilindeki tüm videolar, soru bankası ilerlemesi ve deneme sonuçları kalıcı olarak silinecek. Bu işlem geri alınamaz. Devam etmek için şifreyi gir.</p>
+      <div class="form-row"><label>Şifre</label><input type="password" id="f_resetPwd" placeholder="Şifre"></div>
+      <div id="resetErr" style="color:var(--bad);font-size:12px;display:none;margin:-6px 0 10px;">Şifre yanlış.</div>
+      <div class="form-actions"><button class="btn" onclick="app.closeModal()">Vazgeç</button><button class="btn danger" onclick="app.doResetProfileData()">Sıfırla</button></div>`);
+  },
+  doResetProfileData(){
+    const pwd = document.getElementById('f_resetPwd').value;
+    if(pwd !== '5112'){
+      document.getElementById('resetErr').style.display = 'block';
+      return;
+    }
+    state.lessons.forEach(l=>{ l.tiles = []; });
+    state.genelDenemeler = [];
+    save(); closeModal(); renderApp();
+  },
 
   setImportance(lessonId,val){ getLesson(lessonId).importance=val; save(); renderAll(); },
 
