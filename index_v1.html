@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=1280">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ders Takip Panom</title>
 <style>
   :root{
@@ -19,34 +19,26 @@
   h1,h2,h3{margin:0;}
   button{cursor:pointer;font-family:inherit;}
   .btn{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;}
-  #undoBtn{font-size:15px;line-height:1;}
-  #undoBtn:disabled{cursor:default;}
   .btn:hover{border-color:var(--accent);}
   .btn.small{padding:3px 7px;font-size:12px;}
   .btn.danger:hover{border-color:var(--bad);color:var(--bad);}
   .btn.primary{background:var(--accent2);border-color:var(--accent2);color:#08141f;font-weight:600;}
   .typechoice.on{border-color:var(--accent);color:var(--accent);}
 
-  header.top{display:flex;padding:12px 20px;background:var(--panel);border-bottom:1px solid var(--border);overflow-x:auto;}
-  .top-row1{display:flex;flex-wrap:nowrap;align-items:center;gap:14px;width:100%;}
+  header.top{display:flex;padding:12px 20px;background:var(--panel);border-bottom:1px solid var(--border);}
+  .top-row1{display:flex;flex-wrap:wrap;align-items:center;gap:14px;width:100%;}
   header.top h1{font-size:19px;flex:0 0 auto;white-space:nowrap;}
+  .top-spacer{flex:1;}
 
-  .dash{display:flex;gap:8px;flex-wrap:wrap;flex:0 0 auto;}
+  .dash{display:flex;gap:8px;flex-wrap:wrap;}
   .dash .card{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;min-width:auto;display:flex;flex-direction:column;justify-content:center;}
   .dash .card .num{font-size:17px;font-weight:700;line-height:1.15;}
   .dash .card .lbl{font-size:10.5px;color:var(--muted);margin-top:1px;white-space:nowrap;}
-  .card-dual{gap:7px;}
-  .card-dual .dual-item{display:flex;align-items:baseline;gap:8px;white-space:nowrap;}
-  .card-dual .dual-item .num{font-size:18px;font-weight:700;}
-  .card-dual .dual-item .lbl{font-size:11.5px;color:var(--muted);margin-top:0;}
   .pace-card{cursor:pointer;min-width:210px;}
   .pace-card .num{font-size:13px;}
   .pace-gradient{position:relative;height:8px;border-radius:4px;margin:7px 0 3px;background:linear-gradient(to right,#3ecf8e,#8bd450,#f0b429,#e8834b,#e5534b);}
   .pace-arrow{position:absolute;top:-7px;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid var(--text);transform:translateX(-50%);}
   .pace-scores{font-size:9.5px;color:var(--muted);margin-top:3px;display:flex;flex-wrap:wrap;gap:5px;}
-  .contrib-card{min-width:auto;cursor:pointer;}
-  .contrib-card:hover{border-color:var(--accent);}
-  .contrib-card .lbl{white-space:nowrap;}
 
   .board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(230px,1fr);gap:14px;padding:18px 20px 20px;overflow-x:auto;}
   .column{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px;min-width:0;}
@@ -122,15 +114,12 @@
   .icon-btn:hover{color:var(--accent);}
   .icon-btn.danger:hover{color:var(--bad);}
   .item-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12.5px;}
-  .item-row .iname{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .item-row .imeta{color:var(--muted);font-size:11px;white-space:nowrap;flex:0 0 auto;}
+  .item-row .iname{flex:1;}
+  .item-row .imeta{color:var(--muted);font-size:11.5px;}
 
   .round-check{-webkit-appearance:none;appearance:none;width:19px;height:19px;min-width:19px;border-radius:50%;border:2px solid var(--muted);background:transparent;cursor:pointer;position:relative;margin:0;}
   .round-check:checked{background:var(--good);border-color:var(--good);}
   .round-check:checked::after{content:'';position:absolute;left:5px;top:1px;width:5px;height:9px;border:solid #08141f;border-width:0 2px 2px 0;transform:rotate(45deg);}
-  .square-check{-webkit-appearance:none;appearance:none;width:19px;height:19px;min-width:19px;border-radius:4px;border:2px solid var(--muted);background:transparent;cursor:pointer;position:relative;margin:0;}
-  .square-check:checked{background:var(--accent2);border-color:var(--accent2);}
-  .square-check:checked::after{content:'';position:absolute;left:5px;top:1px;width:5px;height:9px;border:solid #08141f;border-width:0 2px 2px 0;transform:rotate(45deg);}
 
   .trend-wrap{margin-bottom:12px;}
   .trend-wrap h4{font-size:12px;color:var(--muted);margin:0 0 6px;font-weight:600;}
@@ -163,15 +152,13 @@
   <div class="top-row1">
     <h1>📚 Ders Takip Panom</h1>
     <div id="dashRow" class="dash"></div>
-    <span id="saveStatus" class="sub" style="display:inline-block;text-align:right;white-space:nowrap;"></span>
-    <div style="display:flex;gap:8px;flex-wrap:nowrap;flex:0 0 auto;align-items:center;">
-      <button class="btn" id="undoBtn" onclick="app.undo()" title="Geri al">↶</button>
-      <input type="date" id="viewDateInput" class="btn" style="padding:5px 8px;" onchange="app.setViewDate(this.value)" title="Bugün sütununda hangi günü görmek istediğini seç">
-      <button class="btn" id="profileChip" onclick="app.switchProfile()"></button>
-      <button class="btn" onclick="app.exportData()">⬇ Dışa Aktar</button>
-      <button class="btn" onclick="document.getElementById('importFile').click()">⬆ Yedek Yükle</button>
-      <input type="file" id="importFile" accept="application/json" onchange="app.importData(this)">
-    </div>
+    <div class="top-spacer"></div>
+    <button class="btn" id="profileChip" onclick="app.switchProfile()"></button>
+    <span id="saveStatus" class="sub"></span>
+    <button class="btn" onclick="app.exportData()">⬇ Dışa Aktar</button>
+    <button class="btn" onclick="document.getElementById('importFile').click()">⬆ Yedek Yükle</button>
+    <input type="file" id="importFile" accept="application/json" onchange="app.importData(this)">
+    <button class="btn danger" onclick="app.resetData()">Sıfırla</button>
   </div>
 </header>
 <div id="app"></div>
@@ -198,30 +185,9 @@ const db = getFirestore(fbApp);
 let currentProfileId = null;
 let profilesCache = [];
 let profileEditMode = false;
-let viewDate = null;
-let lastSavedSnapshot = null;
-let undoStack = [];
 const PROFILE_COLORS=['#e5534b','#f0b429','#3ecf8e','#4fd1c5','#5b8def','#8b5cf6','#ec4899','#f59e0b'];
 function colorForProfile(id){ let h=0; for(const c of id) h=(h*31+c.charCodeAt(0))%PROFILE_COLORS.length; return PROFILE_COLORS[h]; }
 const LESSON_NAMES=['Türkçe','Matematik','Coğrafya','Tarih','Vatandaşlık'];
-const KPSS_TOPICS={
-  'türkçe': ['Ses Bilgisi','Yazım Kuralları','Noktalama İşaretleri','Sözcükte Anlam','Söz Yapımı (Ekler)','Cümlede Anlam','Paragraf','Sözcük Türleri','Fiilde Çatı','Cümlenin Öğeleri','Anlatım Bozuklukları'],
-  'matematik': ['Sayı Basamakları','Bölme ve Bölünebilme','EBOB - EKOK','Rasyonel Sayılar','Basit Eşitsizlikler','Mutlak Değer','Üslü Sayılar','Köklü Sayılar','Çarpanlara Ayırma','Oran Orantı','Denklem Çözme','Problemler','Kümeler','Fonksiyonlar','Grafik Yorumlama'],
-  'tarih': ['İslamiyet Öncesi Türk Tarihi','İlk Türk İslam Devletleri','Türkiye Selçuklu Tarihi','Osmanlı Kuruluş Dönemi','Osmanlı Yükselme Dönemi','Osmanlı Duraklama Dönemi','Osmanlı Gerileme Dönemi','Osmanlı Dağılma Dönemi','Milli Mücadele Hazırlık Dönemi','Kurtuluş Savaşı Cepheleri','TBMM ve İç İsyanlar','Atatürk İlke ve İnkılapları','Atatürk Dönemi Türk Dış Politikası','Çağdaş Türk ve Dünya Tarihi'],
-  'coğrafya': ['Coğrafi Konum',"Türkiye'nin Yer Şekilleri","Türkiye'nin İklimi","Türkiye'nin Toprak Yapısı","Türkiye'nin Su Kaynakları","Türkiye'de Nüfus ve Yerleşme",'Ekonomik Coğrafya (Tarım-Hayvancılık)','Sanayi ve Ticaret','Madenler ve Enerji Kaynakları','Ulaşım ve Turizm','Bölgeler Coğrafyası','Çevre ve Doğal Afetler'],
-  'vatandaşlık': ['Hukukun Temel Kavramları','Devlet Şekilleri','1982 Anayasasının Genel Esasları','Temel Hak ve Ödevler','Yasama (TBMM)','Yürütme (Cumhurbaşkanlığı)','Yargı','İdare Hukuku','Anayasa Yargısı','Uluslararası Kuruluşlar','Güncel Bilgiler']
-};
-const KPSS_QUESTION_COUNTS={'türkçe':30,'matematik':30,'tarih':27,'coğrafya':18,'vatandaşlık':9};
-function defaultQuestionCountForLesson(lessonName){
-  const key=(lessonName||'').trim().toLocaleLowerCase('tr');
-  return KPSS_QUESTION_COUNTS[key]||40;
-}
-function defaultTopicsForLesson(lessonName){
-  const key=(lessonName||'').trim().toLocaleLowerCase('tr');
-  const list=KPSS_TOPICS[key];
-  if(!list) return [];
-  return list.map(name=>({id:uid(), name, secondsPerQuestion:90, items:[], subtopics:[]}));
-}
 const EXAM_DATE='2026-10-04';
 const FINISH_DATE='2026-09-21';
 const PACE_STAGES=[
@@ -238,14 +204,7 @@ let genelTrendView='total';
 
 function uid(){return 'id'+Math.random().toString(36).slice(2,9)+Date.now().toString(36);}
 function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
-function localDateKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-function todayISO(){return localDateKey(new Date());}
-function nowAtViewDate(){
-  const base = viewDate || todayISO();
-  const t = new Date();
-  const hh=String(t.getHours()).padStart(2,'0'), mm=String(t.getMinutes()).padStart(2,'0'), ss=String(t.getSeconds()).padStart(2,'0');
-  return `${base}T${hh}:${mm}:${ss}`;
-}
+function todayISO(){return new Date().toISOString().slice(0,10);}
 function secToHM(sec){
   sec=Math.max(0,Math.round(sec||0));
   const h=Math.floor(sec/3600), m=Math.round((sec%3600)/60);
@@ -288,35 +247,23 @@ async function loadFromFirestore(){
   const snap = await getDoc(doc(db,'profiles',currentProfileId));
   state = (snap.exists() && snap.data().data) ? JSON.parse(snap.data().data) : defaultState();
   migrateState();
-  lastSavedSnapshot = JSON.stringify(state);
-  undoStack = [];
-  viewDate = todayISO();
 }
 let pendingSaveCount = 0;
-function updateSaveIndicator(text,color,title){
+function updateSaveIndicator(text,color){
   const el=document.getElementById('saveStatus');
   if(!el) return;
   el.textContent = text||'';
   el.style.color = color||'var(--muted)';
-  el.title = title||'';
-}
-function updateUndoBtn(){
-  const btn=document.getElementById('undoBtn');
-  if(!btn) return;
-  btn.disabled = undoStack.length===0;
-  btn.style.opacity = undoStack.length===0 ? '0.4' : '1';
 }
 function save(){
   if(!currentProfileId || state===null){ console.error('save blocked: no valid state loaded'); return; }
-  if(lastSavedSnapshot){ undoStack.push(lastSavedSnapshot); if(undoStack.length>20) undoStack.shift(); }
   pendingSaveCount++;
   updateSaveIndicator('Kaydediliyor…');
   const payload = JSON.stringify(state);
-  lastSavedSnapshot = payload;
   const attempt = ()=> setDoc(doc(db,'profiles',currentProfileId), {data: payload}, {merge:true});
   attempt().catch(err=>{ console.error('save failed, retrying once',err); return attempt(); })
     .then(()=>{ updateSaveIndicator(''); })
-    .catch(err=>{ console.error('save failed after retry',err); updateSaveIndicator('⚠ Kayıt hatası','var(--bad)','Kaydedilemedi, bağlantını kontrol et'); })
+    .catch(err=>{ console.error('save failed after retry',err); updateSaveIndicator('⚠ Kaydedilemedi, bağlantını kontrol et','var(--bad)'); })
     .finally(()=>{ pendingSaveCount--; });
 }
 
@@ -472,83 +419,12 @@ function renderAll(){ renderApp(); if(activeModalRefresh) activeModalRefresh(); 
 function renderApp(){
   document.getElementById('dashRow').innerHTML = dashboardHtml();
   document.getElementById('app').innerHTML = boardHtml()+genelHtml();
-  const dateInput=document.getElementById('viewDateInput');
-  if(dateInput) dateInput.value = viewDate || todayISO();
-  updateUndoBtn();
 }
 
 function avgNetForLesson(lessonId){
   const nets = state.genelDenemeler.map(e=> e.subjects && e.subjects[lessonId] ? e.subjects[lessonId].net : null).filter(v=>v!==null);
   if(!nets.length) return null;
   return nets.reduce((a,b)=>a+b,0)/nets.length;
-}
-function computeDailyActivity(){
-  const map={};
-  function addSecTimestamp(iso,sec){
-    if(!iso||!sec) return;
-    const day=localDateKey(new Date(iso));
-    map[day]=(map[day]||0)+sec;
-  }
-  function addSecDateOnly(dateOnly,sec){
-    if(!dateOnly||!sec) return;
-    const day=dateOnly.slice(0,10);
-    map[day]=(map[day]||0)+sec;
-  }
-  function walk(topic,type,inheritedSPQ){
-    const spq = type==='soru_bankasi' ? (topic.secondsPerQuestion ?? inheritedSPQ) : null;
-    topic.items.forEach(item=>{
-      if(item.done && item.doneAt){
-        const sec = type==='soru_bankasi' ? item.questionCount*spq : item.durationSec;
-        addSecTimestamp(item.doneAt, sec);
-      }
-    });
-    topic.subtopics.forEach(st=>walk(st,type,spq));
-  }
-  state.lessons.forEach(l=>{
-    l.tiles.forEach(t=>{
-      if(t.type==='deneme') t.entries.forEach(e=>addSecDateOnly(e.date,e.durationSec));
-      else t.topics.forEach(topic=>walk(topic,t.type,null));
-    });
-  });
-  state.genelDenemeler.forEach(e=>addSecDateOnly(e.date,e.durationSec));
-  return map;
-}
-const HEATMAP_START='2026-08-14';
-const HEATMAP_END=EXAM_DATE;
-const CONTRIB_GRID_START='2026-08-10';
-const CONTRIB_SEED_SEC=7200;
-const HEATMAP_LEVEL_COLORS=['#33465a','#164a3d','#1f7a5c','#2fae82','#3ecf8e'];
-function dateRangeArray(startStr,endStr){
-  const out=[];
-  const start=new Date(startStr+'T00:00:00');
-  const end=new Date(endStr+'T00:00:00');
-  for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){ out.push(new Date(d)); }
-  return out;
-}
-function heatmapLevel(v,maxVal){ if(!v) return 0; return Math.min(4, Math.ceil(v/maxVal*4)); }
-function contributionGraphHtml(){
-  const daily = computeDailyActivity();
-  const dates = dateRangeArray(HEATMAP_START,HEATMAP_END);
-  const maxVal = Math.max(1, ...dates.map(d=>daily[localDateKey(d)]||0));
-  const cols = 7;
-  const today = viewDate || todayISO();
-  const gridDates = dateRangeArray(CONTRIB_GRID_START,HEATMAP_END);
-  let grid='<div style="display:grid;grid-template-columns:repeat('+cols+',8px);gap:2px;">';
-  gridDates.forEach(d=>{
-    const key=localDateKey(d);
-    const val = key<HEATMAP_START ? CONTRIB_SEED_SEC : (daily[key]||0);
-    const isToday = key===today;
-    const title=`${d.toLocaleDateString('tr-TR')}: ${secToHM(val)}`;
-    const outline = isToday ? 'outline:1.5px solid var(--text);outline-offset:0.5px;' : '';
-    grid+=`<div title="${esc(title)}" style="width:8px;height:8px;border-radius:1.5px;background:${HEATMAP_LEVEL_COLORS[heatmapLevel(val,maxVal)]};${outline}"></div>`;
-  });
-  grid+='</div>';
-  const todaySec = daily[today]||0;
-  const todayLbl = today===todayISO() ? 'Bugün' : new Date(today+'T00:00:00').toLocaleDateString('tr-TR');
-  return `<div class="card contrib-card" onclick="app.openActivityDetail()" title="14 Ağu - 4 Eki, detay için tıkla">
-    ${grid}
-    <div class="lbl" style="margin-top:4px;">${todayLbl}: ${secToHM(todaySec)}</div>
-  </div>`;
 }
 function dashboardHtml(){
   let agg={totalSec:0,doneSec:0};
@@ -564,21 +440,16 @@ function dashboardHtml(){
   const scoreStr = state.lessons.map(l=>{ const v=avgNetForLesson(l.id); return `${esc(l.name)} ${v===null?'-':v.toFixed(0)}`; }).join(' · ');
 
   return `<div class="dash">
-    <div class="card card-dual">
-      <div class="dual-item"><span class="num">%${pct}</span><span class="lbl">Toplam ilerleme</span></div>
-      <div class="dual-item"><span class="num">${secToHM(remaining)}</span><span class="lbl">Kalan toplam süre</span></div>
-    </div>
-    <div class="card card-dual">
-      <div class="dual-item"><span class="num">${dl===null?'-':(dl+' gün')}</span><span class="lbl">Sınava kalan</span></div>
-      <div class="dual-item"><span class="num">${lastTotal===null?'-':lastTotal.toFixed(1)}</span><span class="lbl">Son genel deneme neti</span></div>
-    </div>
+    <div class="card"><div class="num">%${pct}</div><div class="lbl">Toplam ilerleme</div></div>
+    <div class="card"><div class="num">${secToHM(remaining)}</div><div class="lbl">Kalan toplam süre</div></div>
+    <div class="card"><div class="num">${dl===null?'-':(dl+' gün')}</div><div class="lbl">Sınava kalan</div></div>
+    <div class="card"><div class="num">${lastTotal===null?'-':lastTotal.toFixed(1)}</div><div class="lbl">Son genel deneme neti</div></div>
     <div class="card pace-card" onclick="app.editDailyHours()" title="Günlük çalışma hedefini değiştir">
       <div class="num" style="color:${pace.color}">${pace.label} · ${pace.requiredDaily.toFixed(1)} sa/gün</div>
       <div class="pace-gradient"><div class="pace-arrow" style="left:${posPct}%"></div></div>
       <div class="lbl">21 Eyl'e yetişme</div>
       <div class="pace-scores">${scoreStr}</div>
     </div>
-    ${contributionGraphHtml()}
   </div>`;
 }
 
@@ -613,35 +484,17 @@ function todaySuggestions(){
     return {lesson:l, score, best};
   }).filter(r=>r.best && r.score>0).sort((a,b)=>b.score-a.score).slice(0,4);
 }
-function collectTodayItems(){
-  const today = viewDate || todayISO();
-  const out=[];
-  state.lessons.forEach(l=>{
-    l.tiles.forEach(t=>{
-      if(t.type==='deneme') return;
-      function walk(topic,inheritedSPQ){
-        const spq = t.type==='soru_bankasi' ? (topic.secondsPerQuestion ?? inheritedSPQ) : null;
-        topic.items.forEach(item=>{
-          if(item.todayDate===today) out.push({item,lessonId:l.id,tileId:t.id,type:t.type,spq});
-        });
-        topic.subtopics.forEach(st=>walk(st,spq));
-      }
-      t.topics.forEach(topic=>walk(topic,null));
-    });
-  });
-  return out;
-}
 function todayColumnHtml(){
+  const sugg = todaySuggestions();
   const todos = state.todos||[];
-  const planned = collectTodayItems();
-  const vd = viewDate || todayISO();
-  const isRealToday = vd===todayISO();
-  const label = isRealToday ? '🎯 Bugün' : `🎯 ${new Date(vd+'T00:00:00').toLocaleDateString('tr-TR')}`;
   return `<div class="column today-col">
-    <div class="col-head"><div class="lname" style="cursor:default;">${label}</div></div>
+    <div class="col-head"><div class="lname" style="cursor:default;">🎯 Bugün</div></div>
     <div class="today-section">
-      <h4>${isRealToday?'Bugün':'O Gün'} Planladıkların</h4>
-      ${planned.length? planned.map(r=>todayItemHtml(r.item,r.lessonId,r.tileId)).join('') : '<div class="empty">Kutucuklardaki □ işaretiyle bugün yapacaklarını seç</div>'}
+      <h4>Öneriler</h4>
+      ${sugg.length? sugg.map(r=>`<button class="tile-card sugg" onclick="app.openTileModal('${r.lesson.id}','${r.best.id}')" style="text-align:left;width:100%;">
+        <div class="ttitle">${esc(r.lesson.name)}</div>
+        <div class="tmeta">${esc(r.best.name)}</div>
+      </button>`).join('') : '<div class="empty">Öneri yok, harika gidiyorsun 🎉</div>'}
     </div>
     <div class="today-section">
       <h4>Notların</h4>
@@ -691,7 +544,7 @@ function tileCardHtml(l,t){
     pct = s.totalSec>0? Math.round(s.doneSec/s.totalSec*100):0;
     meta = secToHM(s.doneSec)+' / '+secToHM(s.totalSec);
   }
-  return `<button class="tile-card ${cls}" onclick="app.openTile('${l.id}','${t.id}')" style="text-align:left;">
+  return `<button class="tile-card ${cls}" onclick="app.openTileModal('${l.id}','${t.id}')" style="text-align:left;">
     <div class="ttitle">${TILE_ICON[t.type]} ${esc(t.name)}</div>
     <div class="tmeta">${meta}</div>
     ${pct!==null?`<div class="mbar"><i style="width:${pct}%"></i></div>`:''}
@@ -761,19 +614,6 @@ function openModal(html){
   const newBox=root.querySelector('.modal-box');
   if(newBox) newBox.scrollTop=prevScroll;
 }
-function scrollToLastChecked(){
-  requestAnimationFrame(()=>{
-    const box=document.querySelector('#modalRoot .modal-box');
-    if(!box || box.scrollHeight<=box.clientHeight) return;
-    const rows=box.querySelectorAll('.item-row');
-    if(!rows.length) return;
-    let lastDoneIdx=-1;
-    rows.forEach((r,i)=>{ if(r.dataset.done==='1') lastDoneIdx=i; });
-    if(lastDoneIdx===-1) return;
-    const target=rows[Math.min(lastDoneIdx+1, rows.length-1)];
-    target.scrollIntoView({block:'center'});
-  });
-}
 function trendSvg(pointsAsc, title){
   if(pointsAsc.length<2) return `<div class="empty">Trend grafiği için en az 2 kayıt gerekli</div>`;
   const W=480,H=140,PAD=26;
@@ -801,42 +641,6 @@ function trendSvg(pointsAsc, title){
 }
 function denemeTrendSvg(entriesAsc){
   return trendSvg(entriesAsc.map(e=>({date:e.date, value:parseFloat(e.net)||0})), '📈 Net trendi');
-}
-function dailyActivityBarSvg(dates,daily){
-  const W=Math.max(600,dates.length*14), H=220, PAD=10, BOTTOM=36;
-  const vals=dates.map(d=>daily[localDateKey(d)]||0);
-  const maxVal=Math.max(1,...vals);
-  const barW=(W-2*PAD)/dates.length;
-  const chartH=H-PAD-BOTTOM;
-  const today=todayISO();
-  let bars='';
-  dates.forEach((d,i)=>{
-    const v=vals[i];
-    const h=v>0? Math.max(2,v/maxVal*chartH):0;
-    const x=PAD+i*barW;
-    const y=H-BOTTOM-h;
-    const key=localDateKey(d);
-    const color = key===today ? 'var(--warn)' : (v>0? 'var(--accent)' : 'var(--panel2)');
-    const title=`${d.toLocaleDateString('tr-TR')}: ${secToHM(v)}`;
-    bars+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${Math.max(1,barW-2).toFixed(1)}" height="${Math.max(1,h).toFixed(1)}" rx="1.5" style="fill:${color}"><title>${esc(title)}</title></rect>`;
-    if(v>0 && barW>9){
-      bars+=`<text x="${(x+barW/2).toFixed(1)}" y="${(y-4).toFixed(1)}" font-size="7.5" text-anchor="middle" style="fill:var(--muted)">${secToHM(v)}</text>`;
-    }
-    if(i%7===0 || i===dates.length-1){
-      bars+=`<text x="${(x+barW/2).toFixed(1)}" y="${H-14}" font-size="8" text-anchor="middle" style="fill:var(--muted)">${d.getDate()}/${d.getMonth()+1}</text>`;
-    }
-  });
-  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:220px;">${bars}</svg>`;
-}
-function activityDetailHtml(){
-  const daily=computeDailyActivity();
-  const dates=dateRangeArray(HEATMAP_START,HEATMAP_END);
-  const totalSec=dates.reduce((a,d)=>a+(daily[localDateKey(d)]||0),0);
-  const daysWithData=dates.filter(d=>(daily[localDateKey(d)]||0)>0).length;
-  const avgSec=daysWithData? totalSec/daysWithData : 0;
-  return `<div class="modal-head"><h2>📊 Çalışma Takvimi (14 Ağu - 4 Eki)</h2></div>
-  <div class="sub" style="margin-bottom:10px;">Toplam: ${secToHM(totalSec)} · Çalışılan gün: ${daysWithData}/${dates.length} · Günlük ortalama: ${secToHM(avgSec)}</div>
-  <div style="overflow-x:auto;">${dailyActivityBarSvg(dates,daily)}</div>`;
 }
 function calcNetDisplay(total,correct,wrong){
   total=parseInt(total)||0; correct=parseInt(correct)||0; wrong=parseInt(wrong)||0;
@@ -928,22 +732,12 @@ function itemHtml(item,lessonId,tileId,type,spq){
   const sec = isTest? item.questionCount*spq : item.durationSec;
   const label = isTest? item.name : item.title;
   const meta = isTest? (item.questionCount+' soru · '+secToHM(sec)) : secToHM(sec);
-  const isToday = item.todayDate===(viewDate||todayISO());
-  return `<div class="item-row" data-done="${item.done?'1':'0'}">
+  return `<div class="item-row">
     <input type="checkbox" class="round-check" ${item.done?'checked':''} onclick="app.toggleItem('${lessonId}','${tileId}','${item.id}')">
-    <input type="checkbox" class="square-check" ${isToday?'checked':''} onclick="app.toggleToday('${lessonId}','${tileId}','${item.id}')" title="Bugün yapılacaklara ekle/çıkar">
-    <span class="iname" title="${esc(label)}" style="${item.done?'text-decoration:line-through;color:var(--muted);':''}">${esc(label)}</span>
+    <span class="iname" style="${item.done?'text-decoration:line-through;color:var(--muted);':''}">${esc(label)}</span>
     <span class="imeta">${meta}</span>
     <button class="icon-btn" onclick="app.editItem('${lessonId}','${tileId}','${item.id}')" title="Düzenle">✎</button>
     <button class="icon-btn danger" onclick="app.deleteItem('${lessonId}','${tileId}','${item.id}')" title="Sil">✕</button>
-  </div>`;
-}
-function todayItemHtml(item,lessonId,tileId){
-  const label = item.kind==='test' ? item.name : item.title;
-  return `<div class="item-row">
-    <input type="checkbox" class="round-check" ${item.done?'checked':''} onclick="app.toggleItem('${lessonId}','${tileId}','${item.id}')">
-    <span class="iname" title="${esc(label)}" style="${item.done?'text-decoration:line-through;color:var(--muted);':''}">${esc(label)}</span>
-    <input type="checkbox" class="square-check" checked onclick="app.toggleToday('${lessonId}','${tileId}','${item.id}')" title="Bugünden çıkar">
   </div>`;
 }
 
@@ -953,9 +747,6 @@ const app = {
 
   setImportance(lessonId,val){ getLesson(lessonId).importance=val; save(); renderAll(); },
 
-  openActivityDetail(){
-    openModal(activityDetailHtml());
-  },
   editDailyHours(){
     openModal(`<div class="modal-head"><h2>Günlük Çalışma Hedefi</h2></div>
       <div class="form-row"><label>Günde ortalama kaç saat çalışıyorsun?</label><input type="number" step="0.5" id="f_hours" value="${state.dailyStudyHours||4}"></div>
@@ -1028,7 +819,6 @@ const app = {
     if(!name) return;
     const tile={id:uid(), type, name};
     if(type==='deneme'){ tile.defaultDurationSec=parseDuration(document.getElementById('f_dur').value)||2400; tile.defaultQuestionCount=40; tile.entries=[]; }
-    else if(type==='soru_bankasi'){ tile.topics=defaultTopicsForLesson(getLesson(lessonId).name); }
     else tile.topics=[];
     getLesson(lessonId).tiles.push(tile);
     save(); closeModal(); renderApp();
@@ -1058,10 +848,6 @@ const app = {
   openTileModal(lessonId,tileId){
     activeModalRefresh=()=>openModal(tileModalHtml(lessonId,tileId));
     activeModalRefresh();
-  },
-  openTile(lessonId,tileId){
-    app.openTileModal(lessonId,tileId);
-    scrollToLastChecked();
   },
 
   addTopic(lessonId,tileId){
@@ -1162,14 +948,9 @@ const app = {
   },
 
   addItem(lessonId,tileId,topicId){
-    const tile=getTile(lessonId,tileId);
-    const topic=findTopicRecursive(tile.topics,topicId);
-    let maxN=0;
-    topic.items.forEach(it=>{ const m=/^Test (\d+)$/.exec(it.name||''); if(m) maxN=Math.max(maxN,parseInt(m[1],10)); });
-    const defaultName='Test '+(maxN+1);
     openModal(`<div class="modal-head"><h2>Test Ekle</h2></div>
-      <div class="form-row"><label>Test adı</label><input type="text" id="f_name" value="${esc(defaultName)}"></div>
-      <div class="form-row"><label>Soru sayısı</label><input type="number" id="f_count" min="1" value="20" autofocus></div>
+      <div class="form-row"><label>Test adı</label><input type="text" id="f_name" placeholder="örn: Test 3"></div>
+      <div class="form-row"><label>Soru sayısı</label><input type="number" id="f_count" min="1" value="20"></div>
       <div class="form-actions"><button class="btn" onclick="app.openTileModal('${lessonId}','${tileId}')">Vazgeç</button><button class="btn primary" onclick="app.doAddItem('${lessonId}','${tileId}','${topicId}')">Ekle</button></div>`);
   },
   doAddItem(lessonId,tileId,topicId){
@@ -1225,31 +1006,8 @@ const app = {
     const tile=getTile(lessonId,tileId);
     const item=findItemRecursive(tile.topics,itemId);
     item.done=!item.done;
-    item.doneAt=item.done? nowAtViewDate(): null;
+    item.doneAt=item.done? new Date().toISOString(): null;
     save(); renderAll();
-  },
-  toggleToday(lessonId,tileId,itemId){
-    const tile=getTile(lessonId,tileId);
-    const item=findItemRecursive(tile.topics,itemId);
-    const vd = viewDate || todayISO();
-    item.todayDate = (item.todayDate===vd) ? null : vd;
-    save(); renderAll();
-  },
-  setViewDate(v){
-    viewDate = v || todayISO();
-    renderApp();
-  },
-  undo(){
-    if(!undoStack.length || !currentProfileId) return;
-    const prev = undoStack.pop();
-    state = JSON.parse(prev);
-    lastSavedSnapshot = prev;
-    updateSaveIndicator('Kaydediliyor…');
-    setDoc(doc(db,'profiles',currentProfileId), {data: prev}, {merge:true})
-      .then(()=>updateSaveIndicator(''))
-      .catch(err=>{ console.error('undo save failed',err); updateSaveIndicator('⚠ Kayıt hatası','var(--bad)','Geri alma kaydedilemedi'); });
-    closeModal();
-    renderApp();
   },
   toggleTopicAll(lessonId,tileId,topicId){
     const tile=getTile(lessonId,tileId);
@@ -1257,7 +1015,7 @@ const app = {
     const items=collectItems(topic);
     const allDone=items.length>0 && items.every(i=>i.done);
     const newVal=!allDone;
-    const now=newVal? nowAtViewDate(): null;
+    const now=newVal? new Date().toISOString(): null;
     items.forEach(i=>{ i.done=newVal; i.doneAt=now; });
     save(); renderAll();
   },
@@ -1332,14 +1090,14 @@ const app = {
       <div id="f_err" style="color:var(--bad);font-size:12px;margin-bottom:8px;"></div>
       <div class="form-row"><label>Tarih</label><input type="date" id="f_date" value="${todayISO()}"></div>
       <div class="form-row"><label>Süre</label><input type="text" id="f_dur" value="2:10:00" placeholder="sa:dk:sn ya da dakika"></div>
-      ${state.lessons.map(l=>{ const dt=l.lastGenelTotal||defaultQuestionCountForLesson(l.name); return `<div class="form-row"><label>${esc(l.name)}</label>
+      ${state.lessons.map(l=>`<div class="form-row"><label>${esc(l.name)}</label>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-          <input type="number" id="f_total_${l.id}" title="Toplam Soru" value="${dt}" style="width:70px" oninput="app.updateGenelCalc('${l.id}')">
+          <input type="number" id="f_total_${l.id}" title="Toplam Soru" value="${l.lastGenelTotal||40}" style="width:70px" oninput="app.updateGenelCalc('${l.id}')">
           <input type="number" id="f_correct_${l.id}" title="Doğru" value="0" style="width:70px" oninput="app.updateGenelCalc('${l.id}')">
           <input type="number" id="f_wrong_${l.id}" title="Yanlış" value="0" style="width:70px" oninput="app.updateGenelCalc('${l.id}')">
-          <span id="f_calc_${l.id}" class="calc-preview">Boş: ${dt} · Net: 0.00</span>
+          <span id="f_calc_${l.id}" class="calc-preview">Boş: ${l.lastGenelTotal||40} · Net: 0.00</span>
         </div>
-      </div>`; }).join('')}
+      </div>`).join('')}
       <div class="form-actions"><button class="btn" onclick="app.closeModal()">Vazgeç</button><button class="btn primary" onclick="app.doAddGenelDeneme()">Ekle</button></div>`);
   },
   updateGenelCalc(lessonId){
@@ -1396,8 +1154,8 @@ const app = {
     const tile=getTile(lessonId,tileId);
     const raw=document.getElementById('f_bulk').value;
     const lines=raw.split('\n').map(l=>l.trim()).filter(l=>l && !l.startsWith('#'));
-    if(tile.type==='video'){ tile.topics=[]; importVideoLines(tile,lines); }
-    else if(tile.type==='soru_bankasi'){ tile.topics=[]; importSoruLines(tile,lines); }
+    if(tile.type==='video') importVideoLines(tile,lines);
+    else if(tile.type==='soru_bankasi') importSoruLines(tile,lines);
     else importDenemeLines(tile,lines);
     save(); app.openTileModal(lessonId,tileId);
   },
@@ -1423,6 +1181,13 @@ const app = {
     };
     reader.readAsText(file);
   },
+  resetData(){
+    confirmDeleteModal('TÜM veriler silinip başa dönülecek. Emin misin?', 'app.doResetData()', 'app.closeModal()');
+  },
+  doResetData(){
+    state=defaultState(); save(); closeModal(); renderApp();
+  },
+
   toggleProfileEdit(){ profileEditMode=!profileEditMode; showProfilePicker(); },
   addProfile(){
     openModal(`<div class="modal-head"><h2>Profil Ekle</h2></div>
